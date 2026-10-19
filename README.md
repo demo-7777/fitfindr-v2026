@@ -1,61 +1,41 @@
 # FitFindr
 
-> ### 👋 Start here
->
-> **New to this repo? Read [RUNNING.md](RUNNING.md) first** — setup, every
-> command, and what to do when something breaks.
->
-> Once `python test.py` passes:
->
-> ```bash
-> python app.py listings --full -n 6      # read the data (Milestone 1)
-> python app.py fields                    # what you can filter on
-> python app.py ask 'vintage graphic tee under $30'
-> ```
->
-> All three tools are stubs, so that last command will do nothing useful yet.
-> That's the starting position.
->
-> **The rest of this file is your submission.** Fill it in as you go.
+FitFindr is a Python-based AI agent that helps users discover clothing items and generate personalized outfit recommendations based on their preferences and existing wardrobe.
 
----
+The application uses a multi step workflow to search product listings, select a matching item, suggest an outfit, and generate a short description. Product search is integrated through Model Context Protocol (MCP).
 
-<!-- ─────────────────────────────────────────────────────────────────────────
-     HOW TO USE THIS FILE
+### Key Features
 
-     This is your submission. Fill each section in as you finish the milestone
-     it belongs to — don't leave it all to the end.
+- **Multi-step agent workflow:** Coordinates product search, outfit generation, and description creation.
+- **MCP tool integration:** Executes product searches through an MCP server.
+- **Conditional execution:** Stops early and returns a helpful message when no matching products are found.
+- **Preference-based filtering:** Matches product descriptions, sizes, and price limits.
+- **Evaluation framework:** Tests successful execution, unsuccessful searches, tool data flow, output consistency, and price constraints.
 
-     Unit 3 asks for the first five sections. Unit 4 adds the five below them.
-     Leave the unit 4 sections alone until then; they're here so you know
-     what's coming.
+### Results
 
-     Everything is pasted as TEXT. No screenshots, no images, no video links.
-     A typed block of output gets full credit; a picture of the same output
-     gets none.
-     ───────────────────────────────────────────────────────────────────────── -->
+- Met all five evaluation criteria across five repeated runs before and after the search-filtering improvement.
+- Reduced results for the vintage graphic tee under $30 query from 10 to 6 while preserving the correct top recommendation.
+- Verified that unsuccessful searches stop without executing unnecessary downstream tools.
 
-<!-- ═══════════════════════ UNIT 3 — THE BUILD ═══════════════════════ -->
+### My Contributions
 
-## What This Does
+This project was developed as part of the CodePath Applied AI program using a provided starter repository.
 
-<!-- Three or four sentences: what a user asks for, and what they get back. -->
+- Implemented the three core tools for product search, wardrobe-based outfit recommendations, and outfit description generation.
+- Designed and implemented the agent's planning loop to coordinate tool execution, maintain session state, and handle unsuccessful searches through conditional termination.
+- Integrated `search_listings` with the Model Context Protocol (MCP) server, replacing direct function calls with MCP-based execution.
+- Defined five acceptance criteria and used the provided evaluation framework to test successful execution, early termination, tool data flow, output consistency, and price constraints.
+- Refined keyword-based search filtering, reducing results from 10 to 6 in a documented test case while preserving the correct top recommendation.
 
-The user asks for suggestions on a new item based on their desired description, price range, and size. The program searches the available listings and selects the best matching item. It then uses the user's current wardrobe to suggest an outfit that includes the new item. Finally, it returns a short caption describing the outfit and its appeal.
+### Getting Started
+
+See [RUNNING.md](RUNNING.md) for installation, configuration, and execution instructions.
 
 ---
 
 ## Tool Inventory
 
-<!-- Four lines per tool. This is worth 2 points and it's the single most
-     common place students lose them.
-
-     "Returns a list" earns NOTHING. The description has to say what is IN
-     the list.
-
-     The empty case isn't optional either — it's the thing your loop branches
-     on, and if you don't decide it here you'll discover it as a crash in
-     Milestone 5. -->
 
 ### `search_listings`
 
@@ -82,33 +62,19 @@ The user asks for suggestions on a new item based on their desired description, 
 
 ## Planning Loop
 
-<!-- Your branch rule, stated as a rule — the condition AND both paths — plus
-     the file and function that holds it.
-
-     Like this:
-       "If search_listings returns an empty list, put a message in the session
-        and stop. Otherwise take the first result and go to suggest_outfit."
-        — agent.py::run_agent
-
-     The grader checks your code against what you claim here, so the file and
-     function have to be real. -->
 
 **Branch rule:** If `search_listings` returns an empty list, put a message in the session and stop. Otherwise, take the first result and continue to `suggest_outfit`.
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** Using regex, the size and max_price are extracted from the user's query, and the remaining text is cleaned into the description.<!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** Using regex, the size and max_price are extracted from the user's query, and the remaining text is cleaned into the description.
 
-**What moves through the session:** The parsed query is stored in parsed and passed to search_listings. Its results are stored in search_results, the best result becomes selected_item, the generated outfit is stored in outfit_suggestion, and the final caption is stored in fit_card.<!-- which fields, in what order -->
+**What moves through the session:** The parsed query is stored in parsed and passed to search_listings. Its results are stored in search_results, the best result becomes selected_item, the generated outfit is stored in outfit_suggestion, and the final caption is stored in fit_card.
 
 ---
 
 ## Sample Run
 
-<!-- Two things go here.
-
-     1. One FULL query and its output, pasted as text.
-     2. Your three per-tool terminal tests — the command and what it printed. -->
 
 **One full query**
 
@@ -166,12 +132,6 @@ Nothing beats the timeless combo of your favorite white sneakers and the ultimat
 
 ## How I Used AI
 
-<!-- Two specific moments. What you asked, what came back, what you changed.
-
-     "I used Claude to help me code" is not enough.
-
-     "I gave Claude my search_listings spec. It returned None on no match
-     instead of an empty list, so I changed it" is the level we want. -->
 
 **Moment 1**
 
@@ -191,23 +151,11 @@ Nothing beats the timeless combo of your favorite white sneakers and the ultimat
 - *What came back:* It identified that `search_listings` was accepting listings with only one matching keyword and suggested requiring at least two matches for multi-word searches.
 - *What I changed:* I applied the change, ran the after evaluation myself, and verified that all five criteria still passed while the test search decreased from 10 results to 6 more relevant results.
 
-<!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
-
-     Don't fill these in during unit 3.
-     ═══════════════════════════════════════════════════════════════════ -->
 
 ---
 
 ## Run Log — Before
 
-<!-- Five criteria, five tries each, in this exact format.
-
-     Five, because your criteria are written out of five. Mark each try PASS
-     or FAIL, count the passes, and read that count against your target — a
-     row targeting 4 of 5 with three PASS cells is MISSED (3/5).
-
-     `python run_eval.py --label before` runs everything and writes the table
-     into results/. Paste it here and fill in the verdicts. -->
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
@@ -286,22 +234,6 @@ search_results: 8
 
 ## Verdicts and Diagnoses
 
-<!-- MET or MISSED per criterion against LAST UNIT's target, plus a sentence on
-     how you decided.
-
-     Then, for every miss: which of the four places it happened — a tool, the
-     loop's branch, the session, or the model's output — AND the mechanism.
-
-     Not a diagnosis:  "The fit card was bad."
-     A diagnosis:      "The fit card criterion missed on 2 of 5 items. Both had
-                        an empty brand field. My prompt puts the brand in the
-                        first sentence, so the card opened with a blank and read
-                        like a fragment. The tool worked; the prompt assumed a
-                        field that isn't always there."
-
-     Look for a pattern. Three misses on the same tool is one problem, not
-     three. -->
-
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
@@ -333,15 +265,6 @@ One weakness shown by the tests is search relevance. The search can return listi
       in:  dict with keys: outfit, new_item
       out: Channeling major 2000s energy with this fitted butterfly baby tee paired with dark baggy denim and chunky snea…
 ```
-<!-- One full run, printed step by step, with the MCP call visible in it.
-
-     `python app.py ask '...' --trace` once you've added the trace.step()
-     calls in Milestone 2.
-
-     Worth pasting BOTH the happy path and the empty-search path. The empty
-     one should be visibly shorter, because it stops. If your two traces are
-     the same length, your branch isn't working — and this is the fastest way
-     anyone will ever find that out. -->
 
 **Happy path**
 
@@ -371,10 +294,6 @@ One weakness shown by the tests is search relevance. The search can return listi
 
 ## The Improvement
 
-<!-- What you changed, why your diagnosis pointed at it, and the after-run in
-     the same table format. One change, measured properly.
-
-     `python run_eval.py --label after` -->
 
 **What I changed:** I changed search_listings so multi-word searches require at least two keyword matches instead of accepting a listing when only one keyword matches.
 
@@ -392,58 +311,15 @@ One weakness shown by the tests is search relevance. The search can return listi
 
 **Did it help, and how do I know:** Yes. All five criteria continued to meet their targets, while the `vintage graphic tee under $30` search decreased from 10 results before the change to 6 results after the change. The same correct Y2K Baby Tee remained the top selected item, so the change reduced loosely related results without breaking the tested agent behavior.
 
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
-
 
 
 ---
 
-## What's Still Broken
+## Limitations and Future Improvements
 
 All five criteria still meet their targets after the improvement, so there are no remaining failed criteria to fix.
 
 The search is more selective than before, but keyword matching is still simple and may return some loosely related listings. A future improvement could use better relevance scoring, but I stopped here because unit 4 requires only one measured improvement.
-
-<!-- For each criterion still missed: what you'd do, and why you stopped where
-     you did. "I ran out of time" is fine if it's true. Pretending nothing is
-     left is not. -->
-
-
-
-<!-- ═════════════════════════════════════════════════════════════════════
-
-     SUBMISSION CHECKLIST — unit 3
-
-       [ ] criteria.md has five numbered criteria, each with a target
-       [ ] Each criterion has a reason underneath it
-       [ ] All five unit 3 sections above have real content
-       [ ] Tool Inventory: all three tools, inputs WITH TYPES, a specific
-           return value, and the empty case
-       [ ] Planning Loop names the branch rule and agent.py::run_agent
-       [ ] Sample Run: one full query plus the three per-tool tests, as text
-       [ ] At least four new commits
-       [ ] Repository URL submitted — WRITE IT DOWN, you submit the same one
-           next unit
-
-     SUBMISSION CHECKLIST — unit 4
-
-       [ ] mcp_server.py exists with one tool registered
-           (or a written record of exactly where the rewire broke)
-       [ ] Run Log — Before, five criteria, five tries each
-       [ ] Real output pasted underneath, naming file and function
-       [ ] A verdict on every criterion
-       [ ] A diagnosis for every miss, naming a place AND a mechanism
-       [ ] Loop Trace, with the MCP call visible in it
-       [ ] All three failure modes triggered and handled
-       [ ] One improvement, with Run Log — After in the same format
-       [ ] What's Still Broken
-       [ ] At least four new commits
-       [ ] The SAME repository URL as last unit
-
-     Do not delete and recreate this repository. Your commit history is what
-     shows your criteria existed before your results did.
-     ═════════════════════════════════════════════════════════════════════ -->
 
 ---
 
