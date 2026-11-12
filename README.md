@@ -324,3 +324,24 @@ The search is more selective than before, but keyword matching is still simple a
 ---
 
 📖 **How to run this project: [RUNNING.md](RUNNING.md)**
+
+---
+
+## Capstone
+
+**What This Extends**
+
+This extends FitFindr, the Unit 4 agent that searches secondhand listings, suggests an outfit from the user's wardrobe, and writes a fit card. Two things are new. First, a fourth tool, `semantic_search`, that runs only when the keyword search in `search_listings` returns nothing: it embeds the query, compares it to embeddings of the listings, and returns the closest match by meaning. Second, the system now runs as a hosted web service (`serve.py` on Render) with structured logging of every request.
+
+**The Shape**
+
+Shape C — extend one capability — on run path A (hosted). FitFindr's search only matches exact keywords, so a query that uses different words than the listings returns nothing and the agent stops early. In a test of 14 queries against the 40 listings, 6 returned zero results; "retro t-shirt" found nothing because no listing contains "retro" or "t-shirt", while 29 of the 40 listings contain "vintage" and 5 contain "tee". `semantic_search` fills that gap: when keyword search comes back empty, it applies the same price and size filters, embeds the query, scores each remaining listing by cosine similarity against cached listing embeddings, and returns the top match if its score clears a similarity threshold. Below the threshold it still returns nothing, so impossible queries continue to stop early.
+
+Out of scope:
+- I'm not changing the keyword logic in `search_listings`; the fallback only runs when it returns nothing.
+- I'm not reranking non empty keyword results; a reranker has little to choose between when most queries return 0–6 listings.
+- I'm not expanding the listings dataset or building a frontend; `/ask` stays a JSON endpoint.
+
+Stretch (declared before building):
+- Both run paths — hosted on Render and documented as a local run, with a note on what differed.
+- A latency breakdown — measured time per stage (keyword search, semantic search, outfit, fit card) for one run.
