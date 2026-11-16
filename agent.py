@@ -20,6 +20,8 @@ import re
 # UNIT 4
 from tools import suggest_outfit, create_fit_card
 from mcp_client import call_tool
+# UNIT 9 (capstone): fallback when keyword search returns nothing
+from tools import semantic_search
 
 from generate import ModelUnavailable
 
@@ -44,6 +46,8 @@ def new_session(query: str, wardrobe: dict) -> dict:
         "query": query,              # what the user typed
         "parsed": {},                # description / size / max_price you pulled out of it
         "search_results": [],        # everything search_listings returned
+        "semantic_results": [],      # UNIT 9: what semantic_search returned (only runs if search_results is empty)
+        "search_method": None,       # UNIT 9: "keyword", "semantic", or None if nothing matched
         "selected_item": None,       # the one you chose — goes into suggest_outfit
         "wardrobe": wardrobe,        # the user's wardrobe
         "outfit_suggestion": None,   # what suggest_outfit returned
@@ -122,16 +126,40 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         returned=session["search_results"],
     )
 
-    # Required branch: stop if search returned nothing
-    if not session["search_results"]:
-        session["error"] = (
-            "No matching listings were found. Try changing the description, "
-            "size, or increasing the maximum price."
+    if session["search_results"]:
+        session["search_method"] = "keyword"
+        session["selected_item"] = session["search_results"][0]
+    else:
+        # UNIT 9: keyword search found nothing — try matching by meaning
+        try:
+            session["semantic_results"] = semantic_search(
+                session["parsed"]["description"],
+                session["parsed"]["size"],
+                session["parsed"]["max_price"],
+            )
+        except ModelUnavailable:
+            # Don't disguise an API failure as "no match" — say what happened
+            session["error"] = (
+                "No keyword matches, and semantic search couldn't reach the "
+                "embedding model. Check your API key or connection."
+            )
+            return session
+        trace.step(
+            "semantic_search",
+            inputs=session["parsed"],
+            returned=session["semantic_results"],
         )
-        return session
 
-    # Best search result
-    session["selected_item"] = session["search_results"][0]
+        # Required branch: stop if both searches returned nothing
+        if not session["semantic_results"]:
+            session["error"] = (
+                "No matching listings were found. Try changing the description, "
+                "size, or increasing the maximum price."
+            )
+            return session
+
+        session["search_method"] = "semantic"
+        session["selected_item"] = session["semantic_results"][0]
 
     # Next iteration
     iteration_count+=1
