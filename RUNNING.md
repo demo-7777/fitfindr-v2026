@@ -4,6 +4,68 @@ Everything about how the starter works and how to use it.
 
 ---
 
+## Capstone run path (Unit 9)
+
+### Path A — hosted (primary)
+
+**URL:** https://fitfindr-v2026.onrender.com
+**Platform:** Render, free web service (512 MB RAM; sleeps after ~15 min idle, first request after that takes ~1 min to wake).
+
+| Route | What it does |
+|---|---|
+| `GET /health` | `{"status": "ok"}` when awake |
+| `POST /ask` | `{"query": "...", "wardrobe": {...}}` (wardrobe optional) → the agent's session as JSON, plus `request_id` |
+| `GET /logs?n=50` | The last *n* structured log records (see README → Capstone → Instrumentation). Wiped when the instance sleeps — copy them out the same session |
+| `GET /` | 404 — there is no root route, on purpose |
+
+Try it:
+
+```bash
+curl https://fitfindr-v2026.onrender.com/health
+curl -X POST https://fitfindr-v2026.onrender.com/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "retro t-shirt"}'
+curl 'https://fitfindr-v2026.onrender.com/logs?n=10'
+```
+
+**How it got there** (Render dashboard → New → Web Service → connect this GitHub repo):
+
+| Setting | Value |
+|---|---|
+| Branch | `main` (auto-deploys on push) |
+| Build command | `pip install -r requirements.txt` |
+| Start command | `gunicorn serve:app` — the default sync worker; **not** `-k gevent` (breaks every MCP call, see `serve.py`) |
+| Env var `GEMINI_API_KEY` | your Gemini key (set in the dashboard, never committed) |
+| Env var `PYTHON_VERSION` | `3.13.0` |
+| Env var `AI201_CACHE` | `0` — so every request is a real model call and the logged cost/latency is real |
+
+### Path B — local with logs
+
+**Environment**
+
+| Thing | Value |
+|---|---|
+| Python | 3.13.0 (3.11–3.13 supported; **not** 3.14) |
+| Dependencies | `requirements.txt` (bounded ranges). Versions this was tested with: Flask 3.1.3, gunicorn 23.0.0, google-genai 1.75.0, mcp 1.30.0, python-dotenv 1.1.1 |
+| API key | `GEMINI_API_KEY` in `.env` (copy `.env.example`) |
+| Model files | None loaded locally — all models are Gemini API calls. The one data artifact is `data/listing_embeddings.json` (412 KB, committed): stored embeddings of the 40 listings for `semantic_search`. If it's missing it is rebuilt automatically on first use (one embedding call) |
+
+**Start command** (from a clean clone, macOS/Linux/WSL):
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env            # paste your key into .env
+python test.py                  # must pass
+AI201_CACHE=0 python serve.py   # listens on http://localhost:5000
+```
+
+Then, in a second terminal, the same `curl` commands as above with `http://localhost:5000` in place of the Render URL.
+
+**Run record:** every `/ask` request appends one JSON line to `logs/requests.jsonl` (override with `FITFINDR_LOG=/path/file.jsonl`) and prints the same line to stdout prefixed `[request]`.
+
+---
+
 ## Before your first class
 
 Setup happens **before class**. The [environment setup page](../pages/ide_setup)
