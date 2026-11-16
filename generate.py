@@ -344,3 +344,36 @@ def generate(
         f"Still rate limited after {config.MAX_RETRIES} attempts. Wait a "
         f"minute and try again — your key is fine.\nLast error: {last_error}"
     )
+
+
+# ── Embeddings ← UNIT 9 (capstone) ───────────────────────────────────────────
+
+def embed(texts: list[str]) -> list[list[float]]:
+    """
+    Turn each text into a vector of numbers (an embedding) for semantic_search.
+
+    Texts with similar meanings get vectors that point in similar directions,
+    so "retro t-shirt" lands near "vintage graphic tee" even with no shared
+    words. Uses config.EMBED_MODEL at config.EMBED_DIMENSIONS.
+
+    Not cached: listing embeddings are stored on disk by tools.py, and each
+    query is embedded once per run.
+    """
+    global _session_calls
+
+    _check_budget()
+    _wait_for_slot()
+    client = _get_client()
+    _call_times.append(time.monotonic())
+    _session_calls += 1
+
+    try:
+        response = client.models.embed_content(
+            model=config.EMBED_MODEL,
+            contents=texts,
+            config={"output_dimensionality": config.EMBED_DIMENSIONS},
+        )
+    except Exception as exc:  # noqa: BLE001 — surfaced below
+        raise ModelUnavailable(_explain(exc)) from exc
+
+    return [list(e.values) for e in response.embeddings]

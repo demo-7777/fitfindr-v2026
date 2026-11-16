@@ -62,6 +62,24 @@ MAX_ITERATIONS = 10
 SEARCH_RESULT_LIMIT = 10
 
 
+# ─── Semantic fallback search ← UNIT 9 (capstone) ────────────────────────────
+
+# Used only when keyword search returns nothing.
+EMBED_MODEL = "gemini-embedding-001"
+
+# Shorter vectors keep the stored listing embeddings small. Cosine similarity
+# still works on them.
+EMBED_DIMENSIONS = 768
+
+# Lowest cosine similarity that counts as a match. Below it, semantic_search
+# returns nothing and the agent stops early as before. Placeholder: calibrate
+# against real scores before writing criteria.
+SEMANTIC_THRESHOLD = 0.60
+
+# How many semantic matches to return (best first). The agent uses the first.
+SEMANTIC_RESULT_LIMIT = 3
+
+
 # ─── Model ───────────────────────────────────────────────────────────────────
 
 MODEL = os.getenv("AI201_MODEL", "gemini-3.5-flash-lite")

@@ -179,3 +179,111 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     """
 
         return generate(prompt)
+
+
+# ── Tool 4: semantic_search ← UNIT 9 (capstone) ──────────────────────────────
+#
+# A fallback for when search_listings returns nothing because the user's words
+# aren't in the listings ("retro t-shirt" vs "vintage graphic tee"). It keeps
+# the same price and size filters, then ranks by meaning instead of keywords.
+
+import json
+import math
+from pathlib import Path
+
+from generate import embed
+
+EMBEDDINGS_FILE = Path(__file__).parent / "data" / "listing_embeddings.json"
+
+
+def _listing_text(listing: dict) -> str:
+    """The text that represents a listing when it is embedded."""
+    return " | ".join([
+        listing["title"],
+        listing["description"],
+        listing["category"],
+        ", ".join(listing["style_tags"]),
+        ", ".join(listing["colors"]),
+    ])
+
+
+def _passes_filters(listing: dict, size: str | None, max_price: float | None) -> bool:
+    """Same price and size rules as search_listings."""
+    if max_price is not None and listing["price"] > max_price:
+        return False
+    if size is not None:
+        sizes = [p.strip().lower() for p in listing["size"].replace("/", " ").split()]
+        if size.lower() not in sizes:
+            return False
+    return True
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    """Cosine of the angle between two vectors: 1 = same direction."""
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b))
+    return dot / norm if norm else 0.0
+
+
+def load_listing_embeddings() -> dict[str, list[float]]:
+    """
+    Listing id → embedding. Read from data/listing_embeddings.json; any listing
+    missing from the file (or a file made with a different model/size) is
+    embedded now and the file is rewritten. Normally this costs nothing per run.
+    """
+    listings = load_listings()
+    stored = {}
+    if EMBEDDINGS_FILE.exists():
+        data = json.loads(EMBEDDINGS_FILE.read_text())
+        if (data.get("model") == config.EMBED_MODEL
+                and data.get("dimensions") == config.EMBED_DIMENSIONS):
+            stored = data.get("embeddings", {})
+
+    missing = [l for l in listings if l["id"] not in stored]
+    if missing:
+        vectors = embed([_listing_text(l) for l in missing])
+        for listing, vector in zip(missing, vectors):
+            stored[listing["id"]] = vector
+        EMBEDDINGS_FILE.write_text(json.dumps({
+            "model": config.EMBED_MODEL,
+            "dimensions": config.EMBED_DIMENSIONS,
+            "embeddings": stored,
+        }))
+    return stored
+
+
+def semantic_search(
+    description: str,
+    size: str | None = None,
+    max_price: float | None = None,
+) -> list[dict]:
+    """
+    Find listings by meaning when keyword search found none.
+
+    Returns up to config.SEMANTIC_RESULT_LIMIT listing dicts, best first, each
+    with an added "similarity" key (cosine, -1 to 1). Only listings that pass
+    the price/size filters AND score at least config.SEMANTIC_THRESHOLD are
+    returned. Returns [] when nothing clears the threshold or the description
+    is empty — the agent then stops early, as it did before this tool existed.
+    """
+    if not description or not description.strip():
+        return []
+
+    listings = [l for l in load_listings() if _passes_filters(l, size, max_price)]
+    if not listings:
+        return []
+
+    stored = load_listing_embeddings()
+    query_vector = embed([description])[0]
+
+    scored = []
+    for listing in listings:
+        score = _cosine(query_vector, stored[listing["id"]])
+        if score >= config.SEMANTIC_THRESHOLD:
+            scored.append((score, listing))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [
+        {**listing, "similarity": round(score, 4)}
+        for score, listing in scored[:config.SEMANTIC_RESULT_LIMIT]
+    ]
