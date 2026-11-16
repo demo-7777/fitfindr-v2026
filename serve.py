@@ -27,15 +27,23 @@ web server has to be. The reason is worth reading before you deploy: see the
 note above `_one_at_a_time` below — it also decides which gunicorn worker you
 can use.
 
-⚠️ There is deliberately NO logging, NO timing and NO request counting in this
-file. That is unit 9's follow-along: you instrument this yourself, first, and
+UNIT 9 (capstone): structured logging now added — see "structured request
+log" below, and GET /logs.
+
+⚠️ (Original starter note) There is deliberately NO logging, NO timing and NO
+request counting in this file. That is unit 9's follow-along: you instrument this yourself, first, and
 then deploy it. A structured log you were handed teaches you nothing about
 what belongs in one — and the timing field is the one everybody skips.
 """
 
+import datetime as dt
+import json
 import os
 import sys
 import threading
+import time
+import uuid
+from pathlib import Path
 
 # config first, and before anything that talks to the model: it loads your .env
 # and fixes the Windows console encoding for every module that imports it.
@@ -43,10 +51,69 @@ import config  # noqa: F401
 
 from flask import Flask, jsonify, request
 
+import generate
 from agent import run_agent
 from utils.data_loader import get_example_wardrobe
 
 app = Flask(__name__)
+
+
+# ── structured request log ← UNIT 9 (capstone) ───────────────────────────────
+# One JSON object per line, one line per /ask request — including rejected
+# (400) and crashed (500) ones. Written to logs/requests.jsonl AND printed to
+# stdout, because a free host wipes the disk when it sleeps but keeps stdout in
+# its dashboard. GET /logs reads the file back.
+
+LOG_FILE = Path(os.getenv("FITFINDR_LOG", Path(__file__).parent / "logs" / "requests.jsonl"))
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+_log_lock = threading.Lock()
+
+
+def _usage_snapshot() -> dict:
+    tokens = generate.token_counts()
+    return {
+        "calls": generate.call_count(),
+        "cache_hits": generate._cache_hits,
+        "prompt": tokens["prompt"],
+        "output": tokens["output"],
+    }
+
+
+def _write_log(record: dict) -> None:
+    line = json.dumps(record, ensure_ascii=False)
+    with _log_lock:
+        with LOG_FILE.open("a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    print(f"[request] {line}", flush=True)
+
+
+def _log_record(request_id, started, query, status, session=None,
+                error=None, before=None) -> dict:
+    """Build one log record from whatever the request got as far as."""
+    after = _usage_snapshot()
+    before = before or after
+    selected = (session or {}).get("selected_item") or {}
+    return {
+        "ts": dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds"),
+        "request_id": request_id,
+        "route": "/ask",
+        "status": status,
+        "query": query,
+        "search_method": (session or {}).get("search_method"),
+        "keyword_results": len((session or {}).get("search_results") or []),
+        "semantic_results": len((session or {}).get("semantic_results") or []),
+        "selected_id": selected.get("id"),
+        "selected_title": selected.get("title"),
+        "selected_price": selected.get("price"),
+        "similarity": selected.get("similarity"),
+        "fit_card_chars": len((session or {}).get("fit_card") or ""),
+        "error": error if error is not None else (session or {}).get("error"),
+        "duration_ms": round((time.perf_counter() - started) * 1000, 1),
+        "model_calls": after["calls"] - before["calls"],
+        "cache_hits": after["cache_hits"] - before["cache_hits"],
+        "prompt_tokens": after["prompt"] - before["prompt"],
+        "output_tokens": after["output"] - before["output"],
+    }
 
 
 # ── one request at a time ─────────────────────────────────────────────────────
@@ -107,12 +174,20 @@ def ask():
                                                 example wardrobe the CLI uses.
     Out:  the session dict from run_agent(), as JSON.
     """
-    payload = request.get_json(silent=True) or {}
-    query = (payload.get("query") or "").strip()
+    started = time.perf_counter()
+    request_id = uuid.uuid4().hex[:8]
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = {}
+    raw_query = payload.get("query")
+    query = raw_query.strip() if isinstance(raw_query, str) else ""
     if not query:
         # 400 rather than a stack trace: the caller can act on this one.
-        return jsonify({"error": "Send JSON with a 'query' field, e.g. "
-                                 '{"query": "vintage graphic tee under $30"}'}), 400
+        message = ("Send JSON with a 'query' field, e.g. "
+                   '{"query": "vintage graphic tee under $30"}')
+        _write_log(_log_record(request_id, started, raw_query, 400, error=message))
+        return jsonify({"error": message}), 400
 
     wardrobe = payload.get("wardrobe")
     if not isinstance(wardrobe, dict):
@@ -139,17 +214,34 @@ def ask():
     failure = None
     session = None
     with _one_at_a_time:
+        # Snapshot inside the lock so the counter deltas belong to this run only
+        before = _usage_snapshot()
         try:
             session = run_agent(query, wardrobe)
         except Exception as exc:  # noqa: BLE001 — a 500 with a sentence beats a hang
             failure = f"{type(exc).__name__}: {exc}"
+        record = _log_record(request_id, started, query,
+                             500 if failure else 200,
+                             session=session, error=failure, before=before)
 
     # Outside the lock: building a response is not work the next caller should
     # be waiting on.
+    _write_log(record)
     if failure is not None:
-        return jsonify({"error": failure}), 500
+        return jsonify({"error": failure, "request_id": request_id}), 500
 
-    return jsonify(session)
+    return jsonify({**session, "request_id": request_id})
+
+
+@app.get("/logs")
+def logs():
+    """The last N log records (default 50) — the disk copy, while it lasts."""
+    n = request.args.get("n", default=50, type=int)
+    if not LOG_FILE.exists():
+        return jsonify([])
+    with _log_lock:
+        lines = LOG_FILE.read_text(encoding="utf-8").splitlines()
+    return jsonify([json.loads(line) for line in lines[-max(n, 0):] if line.strip()])
 
 
 if __name__ == "__main__":
