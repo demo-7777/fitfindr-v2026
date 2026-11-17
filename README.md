@@ -408,3 +408,90 @@ A hundred runs a day, using the averages above:
 - Server time: 100 × 14.0 s = 1,400 s per day, about 23 minutes. `serve.py` handles one request at a time, so that is 23 minutes of a single worker being busy.
 
 Limit of this measurement: embedding calls report no token counts, so the semantic route costs slightly more than the table shows.
+
+**Run Log and Verdicts**
+
+Three trials of all five criteria from `criteria.md`, run against https://fitfindr-v2026.onrender.com on 2026-11-17 by `run_capstone.py::main` (`python run_capstone.py --label before --trial N`). Nothing was changed between trials. Each trial sends the requests named in `criteria.md`, reads the service's own records back from `GET /logs`, matches them to the responses by `request_id`, and scores each criterion with its written pass rule. Everything is in `results/capstone_before_trial{1,2,3}.json` (every response and log record) and `.md` (summary).
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. semantic_search runs after an empty keyword search | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Semantic pick is in the expected category (or nothing returned) | 3 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Warm mean `duration_ms` of 10 matched runs | ≤ 15.0 s | 8.63 s | 16.98 s | 13.47 s | MISSED |
+| 4. Every request has exactly one complete log record | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Bad input gets a 400 and is logged | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+Criterion 3 is MISSED because the target has to hold in every trial, and Run 2 came in at 16.98 s. `/health` answered in 0.092 s, 0.084 s and 0.116 s before each batch, so all three trials were warm. No run was left out of a mean for having no match.
+
+Real output from each criterion follows. The log records are written by `serve.py` (`_log_record()` / `_write_log()`) and were read back from `GET /logs`.
+
+*Criterion 1, Run 1:* all five queries have `keyword_results: 0` and `model_calls` of at least 1, which can only be the embedding call in `tools.py::semantic_search`. "oversized hoodie" also found a semantic match; its run then ended with the Gemini error described under criterion 3.
+
+```jsonl
+{"ts": "2026-11-17T04:14:11.943+00:00", "request_id": "8d4d75cb", "route": "/ask", "status": 200, "query": "black boots", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 16627.2, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:14:27.380+00:00", "request_id": "6f3bf4ef", "route": "/ask", "status": 200, "query": "oversized hoodie", "search_method": "semantic", "keyword_results": 0, "semantic_results": 3, "selected_id": "lst_027", "selected_title": "Oversized College Crewneck — Faded Red", "selected_price": 21.0, "similarity": 0.6546, "fit_card_chars": 0, "error": "The model couldn't be reached. Check your API key or internet connection, then try again.", "duration_ms": 15315.6, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:14:36.515+00:00", "request_id": "8fb00ca7", "route": "/ask", "status": 200, "query": "sweater", "search_method": "semantic", "keyword_results": 0, "semantic_results": 1, "selected_id": "lst_008", "selected_title": "Knit Cardigan — Chunky Brown", "selected_price": 35.0, "similarity": 0.6083, "fit_card_chars": 262, "error": null, "duration_ms": 9035.7, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 668, "output_tokens": 210}
+{"ts": "2026-11-17T04:14:40.311+00:00", "request_id": "1eba17ed", "route": "/ask", "status": 200, "query": "summer dress", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 3713.1, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:14:44.101+00:00", "request_id": "520089c2", "route": "/ask", "status": 200, "query": "laptop charger", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 3701.4, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+```
+
+*Criterion 2, Run 1:* only "retro t-shirt" got a semantic pick (Graphic Tee, category `tops`, similarity 0.6175). The other four returned nothing (`search_method: null`), which passes under the rule as written. Runs 2 and 3 gave the same five outcomes.
+
+```jsonl
+{"ts": "2026-11-17T04:14:58.698+00:00", "request_id": "eae65d9a", "route": "/ask", "status": 200, "query": "retro t-shirt", "search_method": "semantic", "keyword_results": 0, "semantic_results": 2, "selected_id": "lst_006", "selected_title": "Graphic Tee — 2003 Tour Bootleg Style", "selected_price": 24.0, "similarity": 0.6175, "fit_card_chars": 337, "error": null, "duration_ms": 14509.7, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 656, "output_tokens": 219}
+{"ts": "2026-11-17T04:15:02.410+00:00", "request_id": "e7964935", "route": "/ask", "status": 200, "query": "slacks", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 3648.4, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:17:10.367+00:00", "request_id": "5034ff8e", "route": "/ask", "status": 200, "query": "rain coat", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 3904.4, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:17:14.484+00:00", "request_id": "13438a39", "route": "/ask", "status": 200, "query": "trainers", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 3964.8, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:17:18.684+00:00", "request_id": "4cadaa0e", "route": "/ask", "status": 200, "query": "handbag", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 4102.4, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+```
+
+*Criterion 3, Run 2 (the trial that missed):* the 10 records. Durations ranged from 4.7 s to 46.6 s.
+
+```jsonl
+{"ts": "2026-11-17T04:20:51.991+00:00", "request_id": "5bf72016", "route": "/ask", "status": 200, "query": "vintage graphic tee under $30", "search_method": "keyword", "keyword_results": 6, "semantic_results": 0, "selected_id": "lst_002", "selected_title": "Y2K Baby Tee — Butterfly Print", "selected_price": 18.0, "similarity": null, "fit_card_chars": 255, "error": null, "duration_ms": 13287.5, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 681, "output_tokens": 226}
+{"ts": "2026-11-17T04:20:58.849+00:00", "request_id": "f19b9335", "route": "/ask", "status": 200, "query": "denim jacket under $50", "search_method": "keyword", "keyword_results": 1, "semantic_results": 0, "selected_id": "lst_007", "selected_title": "Denim Jacket — Light Wash, Cropped", "selected_price": 42.0, "similarity": null, "fit_card_chars": 297, "error": null, "duration_ms": 6790.1, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 649, "output_tokens": 199}
+{"ts": "2026-11-17T04:21:03.681+00:00", "request_id": "080011d1", "route": "/ask", "status": 200, "query": "graphic tee", "search_method": "keyword", "keyword_results": 4, "semantic_results": 0, "selected_id": "lst_002", "selected_title": "Y2K Baby Tee — Butterfly Print", "selected_price": 18.0, "similarity": null, "fit_card_chars": 0, "error": "The model couldn't be reached. Check your API key or internet connection, then try again.", "duration_ms": 4742.4, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:21:23.183+00:00", "request_id": "21989a1c", "route": "/ask", "status": 200, "query": "vintage denim", "search_method": "keyword", "keyword_results": 5, "semantic_results": 0, "selected_id": "lst_001", "selected_title": "Vintage Levi's 501 Jeans — Medium Wash", "selected_price": 38.0, "similarity": null, "fit_card_chars": 263, "error": null, "duration_ms": 19429.2, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 636, "output_tokens": 176}
+{"ts": "2026-11-17T04:21:28.755+00:00", "request_id": "71b21e6b", "route": "/ask", "status": 200, "query": "leather", "search_method": "keyword", "keyword_results": 4, "semantic_results": 0, "selected_id": "lst_009", "selected_title": "Platform Mary Janes — Black Patent", "selected_price": 55.0, "similarity": null, "fit_card_chars": 226, "error": null, "duration_ms": 5477.5, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 647, "output_tokens": 185}
+{"ts": "2026-11-17T04:21:52.069+00:00", "request_id": "f2af22ba", "route": "/ask", "status": 200, "query": "jacket", "search_method": "keyword", "keyword_results": 4, "semantic_results": 0, "selected_id": "lst_004", "selected_title": "90s Track Jacket — Navy/White Stripe", "selected_price": 45.0, "similarity": null, "fit_card_chars": 294, "error": null, "duration_ms": 23226.7, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 664, "output_tokens": 212}
+{"ts": "2026-11-17T04:22:18.747+00:00", "request_id": "f924b0e3", "route": "/ask", "status": 200, "query": "streetwear", "search_method": "keyword", "keyword_results": 10, "semantic_results": 0, "selected_id": "lst_001", "selected_title": "Vintage Levi's 501 Jeans — Medium Wash", "selected_price": 38.0, "similarity": null, "fit_card_chars": 282, "error": null, "duration_ms": 26426.2, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 679, "output_tokens": 227}
+{"ts": "2026-11-17T04:22:37.124+00:00", "request_id": "57ce2c21", "route": "/ask", "status": 200, "query": "retro t-shirt", "search_method": "semantic", "keyword_results": 0, "semantic_results": 2, "selected_id": "lst_006", "selected_title": "Graphic Tee — 2003 Tour Bootleg Style", "selected_price": 24.0, "similarity": 0.6175, "fit_card_chars": 0, "error": "The model couldn't be reached. Check your API key or internet connection, then try again.", "duration_ms": 18246.0, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:23:23.884+00:00", "request_id": "8a056780", "route": "/ask", "status": 200, "query": "oversized hoodie", "search_method": "semantic", "keyword_results": 0, "semantic_results": 3, "selected_id": "lst_027", "selected_title": "Oversized College Crewneck — Faded Red", "selected_price": 21.0, "similarity": 0.6546, "fit_card_chars": 276, "error": null, "duration_ms": 46641.4, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 638, "output_tokens": 187}
+{"ts": "2026-11-17T04:23:29.553+00:00", "request_id": "64532dff", "route": "/ask", "status": 200, "query": "sweater", "search_method": "semantic", "keyword_results": 0, "semantic_results": 1, "selected_id": "lst_008", "selected_title": "Knit Cardigan — Chunky Brown", "selected_price": 35.0, "similarity": 0.6083, "fit_card_chars": 287, "error": null, "duration_ms": 5505.3, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 646, "output_tokens": 190}
+```
+
+*Criterion 4, Run 1:* the responses, then the one log record each `request_id` matched:
+
+```
+HTTP 200  request_id=a9e41b36  sent={"query": "vintage graphic tee under $30"}
+HTTP 200  request_id=cfe8d47c  sent={"query": "retro t-shirt"}
+HTTP 200  request_id=7e005c6c  sent={"query": "laptop charger"}
+HTTP 400  request_id=ef0d7289  sent={"query": ""}
+HTTP 400  request_id=1291e665  sent="this is not json"
+```
+
+```jsonl
+{"ts": "2026-11-17T04:19:11.162+00:00", "request_id": "a9e41b36", "route": "/ask", "status": 200, "query": "vintage graphic tee under $30", "search_method": "keyword", "keyword_results": 6, "semantic_results": 0, "selected_id": "lst_002", "selected_title": "Y2K Baby Tee — Butterfly Print", "selected_price": 18.0, "similarity": null, "fit_card_chars": 221, "error": null, "duration_ms": 25132.9, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 655, "output_tokens": 194}
+{"ts": "2026-11-17T04:19:28.256+00:00", "request_id": "cfe8d47c", "route": "/ask", "status": 200, "query": "retro t-shirt", "search_method": "semantic", "keyword_results": 0, "semantic_results": 2, "selected_id": "lst_006", "selected_title": "Graphic Tee — 2003 Tour Bootleg Style", "selected_price": 24.0, "similarity": 0.6175, "fit_card_chars": 260, "error": null, "duration_ms": 16990.8, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 651, "output_tokens": 196}
+{"ts": "2026-11-17T04:19:32.168+00:00", "request_id": "7e005c6c", "route": "/ask", "status": 200, "query": "laptop charger", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 3727.3, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:19:32.251+00:00", "request_id": "ef0d7289", "route": "/ask", "status": 400, "query": "", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:19:32.333+00:00", "request_id": "1291e665", "route": "/ask", "status": 400, "query": null, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+```
+
+*Criterion 5, Run 1:* the responses, then the matching records (all `status: 400`, 0 model calls):
+
+```
+HTTP 400  request_id=6f79417a  sent={"query": ""}
+HTTP 400  request_id=e9ecff75  sent={"query": ""}
+HTTP 400  request_id=02a6c58f  sent="this is not json"
+HTTP 400  request_id=ae4261a1  sent="{broken json"
+HTTP 400  request_id=63633859  sent={"query": 123}
+```
+
+```jsonl
+{"ts": "2026-11-17T04:19:32.411+00:00", "request_id": "6f79417a", "route": "/ask", "status": 400, "query": "", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:19:32.494+00:00", "request_id": "e9ecff75", "route": "/ask", "status": 400, "query": "", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:19:32.569+00:00", "request_id": "02a6c58f", "route": "/ask", "status": 400, "query": null, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:19:32.698+00:00", "request_id": "ae4261a1", "route": "/ask", "status": 400, "query": null, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T04:19:32.752+00:00", "request_id": "63633859", "route": "/ask", "status": 400, "query": 123, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+```
