@@ -345,3 +345,66 @@ Out of scope:
 Stretch (declared before building):
 - Both run paths — hosted on Render and documented as a local run, with a note on what differed.
 - A latency breakdown — measured time per stage (keyword search, semantic search, outfit, fit card) for one run.
+
+**Running It**
+
+Path A (hosted): https://fitfindr-v2026.onrender.com on Render's free tier, started with `gunicorn serve:app` (worker timeout set to 120 s in `gunicorn.conf.py`). Path B (local) is also documented, for the "both run paths" stretch. The URL, routes, Render settings, Python version, dependencies and the local start command are all in [RUNNING.md](RUNNING.md). The local path was tested from a fresh clone of this repo and worked without changes.
+
+**Instrumentation**
+
+Every `POST /ask` writes one JSON record, including rejected (400) and crashed (500) requests. Records go to `logs/requests.jsonl` and to stdout, because Render's dashboard keeps stdout after the disk is wiped. `GET /logs?n=N` reads the file back. Code: `serve.py`, functions `_log_record()` and `_write_log()`.
+
+| Field | What it holds |
+|---|---|
+| `ts` | UTC timestamp when the request finished |
+| `request_id` | Short id, also returned in the response |
+| `status` | HTTP status: 200, 400 or 500 |
+| `query` | What came in, exactly as sent |
+| `search_method` | `keyword`, `semantic` (the new fallback), or `null` if nothing matched |
+| `keyword_results` / `semantic_results` | How many listings each search returned |
+| `selected_id` / `selected_title` / `selected_price` | What came out: the listing the agent chose |
+| `similarity` | Cosine score of the chosen listing (semantic route only) |
+| `fit_card_chars` | Length of the fit card (0 = none was made) |
+| `error` | The run's error message, or `null` |
+| `duration_ms` | Time from request received to response built |
+| `model_calls` / `cache_hits` | Gemini calls made by this run / answers served from cache (should be 0 with `AI201_CACHE=0`) |
+| `prompt_tokens` / `output_tokens` | Tokens the service reported for this run (embedding calls report none) |
+
+The 12 entries below came from the Render deployment on 2026-11-17, copied from `GET /logs?n=12` (saved in `results/capstone_cost_run_raw.json`). They are 10 measured runs (5 on the keyword route, 3 on the semantic route, 2 with no match) and 2 rejected requests (empty query; body not JSON):
+
+```jsonl
+{"ts": "2026-11-17T00:13:05.555+00:00", "request_id": "59db3f7d", "route": "/ask", "status": 200, "query": "vintage graphic tee under $30", "search_method": "keyword", "keyword_results": 6, "semantic_results": 0, "selected_id": "lst_002", "selected_title": "Y2K Baby Tee — Butterfly Print", "selected_price": 18.0, "similarity": null, "fit_card_chars": 253, "error": null, "duration_ms": 23851.8, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 652, "output_tokens": 191}
+{"ts": "2026-11-17T00:13:23.786+00:00", "request_id": "c71dc421", "route": "/ask", "status": 200, "query": "denim jacket under $50", "search_method": "keyword", "keyword_results": 1, "semantic_results": 0, "selected_id": "lst_007", "selected_title": "Denim Jacket — Light Wash, Cropped", "selected_price": 42.0, "similarity": null, "fit_card_chars": 271, "error": null, "duration_ms": 18089.3, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 652, "output_tokens": 197}
+{"ts": "2026-11-17T00:13:35.114+00:00", "request_id": "4a44a320", "route": "/ask", "status": 200, "query": "graphic tee", "search_method": "keyword", "keyword_results": 4, "semantic_results": 0, "selected_id": "lst_002", "selected_title": "Y2K Baby Tee — Butterfly Print", "selected_price": 18.0, "similarity": null, "fit_card_chars": 275, "error": null, "duration_ms": 11173.8, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 663, "output_tokens": 213}
+{"ts": "2026-11-17T00:13:45.359+00:00", "request_id": "fe206b64", "route": "/ask", "status": 200, "query": "vintage denim", "search_method": "keyword", "keyword_results": 5, "semantic_results": 0, "selected_id": "lst_001", "selected_title": "Vintage Levi's 501 Jeans — Medium Wash", "selected_price": 38.0, "similarity": null, "fit_card_chars": 273, "error": null, "duration_ms": 10079.3, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 665, "output_tokens": 214}
+{"ts": "2026-11-17T00:14:01.733+00:00", "request_id": "d1e2be8a", "route": "/ask", "status": 200, "query": "leather", "search_method": "keyword", "keyword_results": 4, "semantic_results": 0, "selected_id": "lst_009", "selected_title": "Platform Mary Janes — Black Patent", "selected_price": 55.0, "similarity": null, "fit_card_chars": 299, "error": null, "duration_ms": 16215.9, "model_calls": 2, "cache_hits": 0, "prompt_tokens": 628, "output_tokens": 181}
+{"ts": "2026-11-17T00:14:21.896+00:00", "request_id": "62540404", "route": "/ask", "status": 200, "query": "retro t-shirt", "search_method": "semantic", "keyword_results": 0, "semantic_results": 2, "selected_id": "lst_006", "selected_title": "Graphic Tee — 2003 Tour Bootleg Style", "selected_price": 24.0, "similarity": 0.6175, "fit_card_chars": 312, "error": null, "duration_ms": 20035.5, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 673, "output_tokens": 221}
+{"ts": "2026-11-17T00:14:40.834+00:00", "request_id": "77b069de", "route": "/ask", "status": 200, "query": "oversized hoodie", "search_method": "semantic", "keyword_results": 0, "semantic_results": 3, "selected_id": "lst_027", "selected_title": "Oversized College Crewneck — Faded Red", "selected_price": 21.0, "similarity": 0.6546, "fit_card_chars": 294, "error": null, "duration_ms": 18707.0, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 634, "output_tokens": 178}
+{"ts": "2026-11-17T00:14:54.918+00:00", "request_id": "9e097a62", "route": "/ask", "status": 200, "query": "sweater", "search_method": "semantic", "keyword_results": 0, "semantic_results": 1, "selected_id": "lst_008", "selected_title": "Knit Cardigan — Chunky Brown", "selected_price": 35.0, "similarity": 0.6083, "fit_card_chars": 241, "error": null, "duration_ms": 13881.9, "model_calls": 3, "cache_hits": 0, "prompt_tokens": 646, "output_tokens": 189}
+{"ts": "2026-11-17T00:14:59.398+00:00", "request_id": "35906186", "route": "/ask", "status": 200, "query": "car tires", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 4267.2, "model_calls": 1, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T00:15:03.717+00:00", "request_id": "e5275fb8", "route": "/ask", "status": 200, "query": "designer ballgown size XXS under $5", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.", "duration_ms": 4175.0, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T00:15:28.943+00:00", "request_id": "6163a19c", "route": "/ask", "status": 400, "query": "", "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+{"ts": "2026-11-17T00:15:29.072+00:00", "request_id": "cd5c8354", "route": "/ask", "status": 400, "query": null, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
+```
+
+A failure the log could not record: before the timeout fix, the first `/ask` for "denim jacket under $50" (2026-11-17, about 00:04 UTC) returned HTTP 500 after 30.8 s, and no log entry exists for it. Gunicorn's default 30 s worker timeout killed the worker mid-request, before `_write_log()` ran. The fix was `gunicorn.conf.py` (`timeout = 120`); none of the runs since then have hit it.
+
+**What It Costs**
+
+Measured from the 10 runs above, on Render with the cache off. Each number comes from the run's own log record: `model_calls`, `prompt_tokens` and `output_tokens` are differences in `generate.py`'s counters taken before and after the run, and `duration_ms` is wall-clock time in `serve.py`.
+
+| Route | Runs | Mean time | Model calls | Tokens (prompt + output) |
+|---|---|---|---|---|
+| All | 10 | 14.0 s | 2.0 | 680 (521 + 158) |
+| Keyword | 5 | 15.9 s | 2 | 851 |
+| Semantic | 3 | 17.5 s | 3 | 847, plus one embedding call that reports no tokens |
+| No match | 2 | 4.2 s | 0–1 | 0 |
+
+Per run: about 2 model calls, 680 tokens and 14 seconds of server time. Actual spend is $0 because the key is on Gemini's free tier.
+
+A hundred runs a day, using the averages above:
+- Model calls: 100 × 2.0 = 200 per day
+- Tokens: 100 × 680 = 68,000 per day
+- Server time: 100 × 14.0 s = 1,400 s per day, about 23 minutes. `serve.py` handles one request at a time, so that is 23 minutes of a single worker being busy.
+
+Limit of this measurement: embedding calls report no token counts, so the semantic route costs slightly more than the table shows.
