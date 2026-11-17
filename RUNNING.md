@@ -34,7 +34,7 @@ curl 'https://fitfindr-v2026.onrender.com/logs?n=10'
 |---|---|
 | Branch | `main` (auto-deploys on push) |
 | Build command | `pip install -r requirements.txt` |
-| Start command | `gunicorn serve:app` — the default sync worker; **not** `-k gevent` (breaks every MCP call, see `serve.py`) |
+| Start command | `gunicorn serve:app` — the default sync worker; **not** `-k gevent` (breaks every MCP call, see `serve.py`). Gunicorn also reads `gunicorn.conf.py` from the repo root, which raises the worker timeout from 30 s to 120 s (one run took ~31 s and was killed at the default) |
 | Env var `GEMINI_API_KEY` | your Gemini key (set in the dashboard, never committed) |
 | Env var `PYTHON_VERSION` | `3.13.0` |
 | Env var `AI201_CACHE` | `0` — so every request is a real model call and the logged cost/latency is real |
