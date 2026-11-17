@@ -585,3 +585,66 @@ Did it help? Yes for criterion 3, and the numbers show it came from the stage I 
 The mean fell by 3.3 s, close to the ~4 s the MCP start used to cost, and the fastest run dropped from 4.7 s to 1.4 s because that fixed 4 s is gone. The Gemini slowdowns are unchanged: the slowest run actually got slower (52.9 s), and After Run 3 came in at 12.67 s, close to the limit. So the criterion is met with less room to spare than Runs 1 and 2 suggest. The other four criteria were unaffected (MET before and after).
 
 What it cost elsewhere: the deployed agent no longer goes through MCP, which was the Unit 4 feature, although the server and client are still in the repo and one setting turns them back on. It adds no model calls or tokens. One more difference: the "before" trials had 5 matched runs that ended with "The model couldn't be reached" and the "after" trials had none. This change doesn't touch error handling, so I put that down to Gemini having fewer outages during the second run, not to the fix.
+
+Where the time went after the fix: removing MCP made each run about 4 s faster, so the trial's requests arrived closer together and ran into `generate.py`'s own 15-calls-per-minute limiter (`_wait_for_slot`) much more often. The new `limiter_wait_ms` field shows how much of criterion 3's time went to waiting:
+
+| Trial | Limiter wait in the 10 criterion 3 runs | Share of their total time | Runs that waited |
+|---|---|---|---|
+| After Run 1 | 46.0 s | 59% | 4 of 10 |
+| After Run 2 | 28.3 s | 32% | 5 of 10 |
+| After Run 3 | 48.2 s | 38% | 8 of 10 |
+
+So after the fix, the time is split between Gemini calls and our own limiter. `embed()` uses the same 15-per-minute allowance as text generation, even though the embedding model has its own quota with Google, so semantic runs take 3 slots and push the next request into a wait. That is why `semantic_search` took 14–37 s in a few Render runs, while it takes about 0.2 s when no wait happens. This gap between requests only happens because the test sends requests back to back. At a hundred runs a day (about 4 an hour) the limiter would never fire.
+
+**What's Still Broken**
+
+After the improvement all five criteria are MET, so I went through which targets were too easy and which problems the criteria don't catch.
+
+- Criterion 2's target was set too low, and its rule lets "no result" pass. In all six trials, only "retro t-shirt" got a semantic pick; "slacks", "rain coat", "trainers" and "handbag" returned nothing, because the 0.60 threshold rejects them, and that counts as a pass. So the criterion is met while the new capability helped with 1 of 5 synonym queries. I would tighten it to: at least 3 of the 5 queries return a listing in the expected category, and returning nothing counts as a FAIL. On the current runs that scores 1/5, MISSED. To fix it I would recalibrate `SEMANTIC_THRESHOLD`: score a labeled set of synonym queries against nonsense queries ("car tires" scored 0.47) and set the cutoff between the two groups. Right now it rests on about ten queries I looked at while building. I stopped because the brief asks for one measured improvement, and I chose the latency miss because it was the criterion that actually failed.
+- Criterion 3 is met but with little room to spare (After Run 3: 12.67 s against 15.0 s). Two causes remain: Gemini calls that sometimes take 10–24 s or more (the slowest run was 52.9 s), and the limiter waits above. What I would do: give `embed()` its own pacing instead of sharing the text model's 15 per minute, and give each `generate_content` call a time limit (for example 8 s) with one retry. I didn't build these because each changes call volume and cost and would need its own measured run.
+- Brief Gemini errors end a run straight away. In the "before" trials, 5 matched runs ended with "The model couldn't be reached" (also once in the local run), because `generate()` only retries rate-limit errors (429), not other errors such as a 503. None of the criteria counts this. One retry for these errors would fix it.
+- A run that takes longer than 120 s would still be killed by gunicorn without a log record. The timeout fix moved that limit from 30 s to 120 s but didn't remove it. No run came close (the slowest was 52.9 s).
+
+The one thing I'd do first with more time: recalibrate the semantic threshold and tighten criterion 2. `semantic_search` is the capability this unit added, and right now it returns nothing for 4 of my 5 synonym test queries, so the extension rarely does what it was built for. Latency is now within target, and the error retries matter less while those outages stay rare.
+
+**Stretch: Latency breakdown**
+
+Measured by the stage timers in `agent.py::run_agent` (`timings_ms`) and the counters in `generate.py` (`limiter_wait_ms`, `api_ms`), over the 30 criterion 3 runs of the "after" trials on Render:
+
+| Stage | Mean per run | Notes |
+|---|---|---|
+| `search_listings` (direct) | 0.4 ms | was 3.8–9.7 s through MCP before the improvement |
+| `semantic_search` (semantic runs only, n=9) | 2.8 s | about 0.2 s when there is no limiter wait; up to 36.9 s when there is |
+| `suggest_outfit` | 4.2 s | one Gemini call (median under 2 s; slow calls of 10 s or more happen) |
+| `create_fit_card` | 4.6 s | one Gemini call |
+| Whole run | 9.7 s | of which 5.6 s inside API calls and 4.1 s waiting in the limiter |
+
+One run as an example (After Run 1, "retro t-shirt", taken from its log record): total 12.7 s; `search_listings` 0.5 ms, `semantic_search` 7.2 s, `suggest_outfit` 1.0 s, `create_fit_card` 4.5 s; limiter wait 10.4 s.
+
+Which stage dominates: the two Gemini text calls, `suggest_outfit` and `create_fit_card`, which take 8.8 s of the 9.7 s mean. That stage time includes the limiter's waits, which happen inside `generate()` before each call, so about 4.1 s of it is waiting and about 5.6 s is Gemini answering. Before the improvement, the MCP search was a fixed ~4 s of every run, second only to the Gemini calls.
+
+**Stretch: Both run paths**
+
+The same code was run both ways: hosted on Render (Path A) and locally with `AI201_CACHE=0 python serve.py` from RUNNING.md (Path B). For the local run I ran one full trial of all five criteria (`python run_capstone.py --label local --trial 1 --url http://localhost:5077`), and the server's own log is committed as `results/capstone_local_requests.jsonl` (30 records).
+
+| | Render (Path A, after improvement, 3 trials) | Local (Path B, 1 trial) |
+|---|---|---|
+| Criteria met | 5 of 5 in every trial | 5 of 5 |
+| Criterion 3 mean | 7.83 / 8.72 / 12.67 s | 14.63 s |
+| `/health` | 0.07–0.12 s warm; 22.4 s on the first request after sleeping | 0.004 s; no sleep |
+| `search_listings` stage | 0.4 ms | 1.2 ms |
+| Worker timeout | Yes: gunicorn killed a 30.8 s run before `gunicorn.conf.py` raised the limit | No: `python serve.py` runs Flask's own server with no worker timeout, so that failure could not happen locally |
+| Logs | Wiped when the instance sleeps; copied out through `/logs` the same session | Stay in a file on disk |
+| Setup | Connect the repo, set 3 environment variables, then about 2–5 minutes per deploy | venv + `pip install` + `.env`; tested from a fresh clone in about the same time |
+| Cost | $0 (free Render plan; Gemini free tier) | $0, same Gemini key and quota |
+
+The differences that matter: the timeout failure and the wiped logs only happen on Render, and only Render has cold starts. The Gemini calls dominate both. The local criterion 3 mean came out higher (14.63 s) because of a single 47.2 s run (`suggest_outfit` alone took most of it), not because the local machine is slower. Every stage that doesn't call Gemini is fast on both. One local run also ended with "The model couldn't be reached" (oversized hoodie), the same Gemini error as on Render.
+
+**How I Used AI**
+
+I used Claude (in Claude Code) throughout this unit. Two specific moments:
+
+1. Choosing the extension. I first planned a fourth tool that would re-rank the keyword search results by how similar they are to the query. When I asked Claude about it, it pointed out that `search_listings` already sorts by keyword-match score, so a second similarity score would mostly agree with it. It then ran `search_listings` on 14 queries and showed that most returned 0–6 listings, and that "retro t-shirt" returned 0 because no listing contains "retro" or "t-shirt". I changed my plan to a fallback that only runs when keyword search returns nothing, which is what `semantic_search` became. I kept its suggestion to embed the listings once and store them, and decided myself that the fallback must not return a match for nonsense queries.
+2. Diagnosing the criterion 3 miss. Claude's first idea was that the 15-calls-per-minute limiter caused the slow runs, but its own timestamp calculation didn't support that. I checked Render's logs myself and found 11 limiter waits of 1–12 s, which were real but too small to explain 20–40 s extra. So I had Claude add stage timing to the log and run a diagnostic batch, which pointed at two components: slow individual Gemini calls, and the MCP process starting on every call. I chose to remove MCP as the one improvement because it is a fixed cost that Claude could measure, and the "after" trials later showed that the limiter became a bigger share once runs got faster.
+
+I also asked Claude to fill in the details of my criteria (the specific queries, how a pass is observed, and parts of the reasons). The decisions were mine: the relevance check, 3 of 5 for criterion 2 with "nothing returned" counting as a pass, the warm-run definition, and the bad-input mix. Claude wrote them out, and I reviewed them before committing.
