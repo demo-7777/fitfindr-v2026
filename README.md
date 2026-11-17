@@ -495,3 +495,93 @@ HTTP 400  request_id=63633859  sent={"query": 123}
 {"ts": "2026-11-17T04:19:32.698+00:00", "request_id": "ae4261a1", "route": "/ask", "status": 400, "query": null, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
 {"ts": "2026-11-17T04:19:32.752+00:00", "request_id": "63633859", "route": "/ask", "status": 400, "query": 123, "search_method": null, "keyword_results": 0, "semantic_results": 0, "selected_id": null, "selected_title": null, "selected_price": null, "similarity": null, "fit_card_chars": 0, "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "duration_ms": 0.1, "model_calls": 0, "cache_hits": 0, "prompt_tokens": 0, "output_tokens": 0}
 ```
+
+*Diagnosis: criterion 3 (MISSED)*
+
+The miss came from a few very slow runs, not from runs being slow in general. Most runs took 5–7 s; a few took 36–47 s ("oversized hoodie" 46.6 s and "streetwear" 26.4 s in Run 2, "streetwear" 45.6 s and "retro t-shirt" 36.6 s in Run 3), with the same 2–3 model calls as the fast runs. To find where that time went, I added stage timing to each log record: `agent.py::run_agent` stores `timings_ms` for each stage, and `generate.py` counts how long the limiter slept (`limiter_wait_ms`), how long the API calls took (`api_ms`) and any 429 retries. I then sent criterion 3's 10 queries twice more to Render (`results/capstone_diagnostic_stages.json`):
+
+```
+vintage graphic tee under $30  total  28.7s | mcp  9.7s | semantic  0.0s | suggest_outfit  19.0s | create_fit_card   0.0s | limiter wait 0.0s | retries 0
+denim jacket under $50         total  13.6s | mcp  4.5s | semantic  0.0s | suggest_outfit   8.4s | create_fit_card   0.6s | limiter wait 0.0s | retries 0
+graphic tee                    total  19.5s | mcp  4.6s | semantic  0.0s | suggest_outfit  14.2s | create_fit_card   0.8s | limiter wait 0.0s | retries 0
+vintage denim                  total  34.7s | mcp  4.5s | semantic  0.0s | suggest_outfit  24.0s | create_fit_card   6.2s | limiter wait 0.0s | retries 0
+leather                        total   6.3s | mcp  4.6s | semantic  0.0s | suggest_outfit   0.9s | create_fit_card   0.8s | limiter wait 0.0s | retries 0
+jacket                         total  16.2s | mcp  4.6s | semantic  0.0s | suggest_outfit  10.8s | create_fit_card   0.7s | limiter wait 0.0s | retries 0
+streetwear                     total   5.9s | mcp  4.1s | semantic  0.0s | suggest_outfit   1.0s | create_fit_card   0.8s | limiter wait 0.0s | retries 0
+oversized hoodie               total  21.3s | mcp  7.2s | semantic  5.2s | suggest_outfit   0.9s | create_fit_card   8.0s | limiter wait 0.0s | retries 0
+sweater                        total   8.1s | mcp  3.8s | semantic  0.2s | suggest_outfit   0.8s | create_fit_card   3.3s | limiter wait 0.0s | retries 0
+vintage graphic tee under $30  total  16.3s | mcp  4.0s | semantic  0.0s | suggest_outfit   1.3s | create_fit_card  11.1s | limiter wait 0.0s | retries 0
+denim jacket under $50         total   5.7s | mcp  4.1s | semantic  0.0s | suggest_outfit   0.7s | create_fit_card   0.9s | limiter wait 0.0s | retries 0
+graphic tee                    total  19.6s | mcp  3.9s | semantic  0.0s | suggest_outfit   1.3s | create_fit_card  14.4s | limiter wait 0.0s | retries 0
+vintage denim                  total  28.3s | mcp  4.5s | semantic  0.0s | suggest_outfit   0.9s | create_fit_card  22.8s | limiter wait 0.0s | retries 0
+leather                        total  28.4s | mcp  4.2s | semantic  0.0s | suggest_outfit  12.8s | create_fit_card  11.5s | limiter wait 0.0s | retries 0
+jacket                         total   5.5s | mcp  3.9s | semantic  0.0s | suggest_outfit   1.0s | create_fit_card   0.6s | limiter wait 0.0s | retries 0
+streetwear                     total   7.3s | mcp  4.4s | semantic  0.0s | suggest_outfit   2.1s | create_fit_card   0.8s | limiter wait 0.0s | retries 0
+retro t-shirt                  total   5.8s | mcp  3.8s | semantic  0.2s | suggest_outfit   1.1s | create_fit_card   0.6s | limiter wait 0.0s | retries 0
+oversized hoodie               total   6.2s | mcp  4.3s | semantic  0.2s | suggest_outfit   1.7s | create_fit_card   0.0s | limiter wait 0.0s | retries 0
+sweater                        total   6.4s | mcp  4.3s | semantic  0.3s | suggest_outfit   1.0s | create_fit_card   0.8s | limiter wait 0.0s | retries 0
+```
+
+Over those 20 runs, the mean was 14.9 s: 9.7 s inside Gemini text calls, 4.7 s in the MCP search, and 0.5 s in everything else. The limiter waited 0 s and there were 0 retries. Two components cause the miss:
+
+- Stage `suggest_outfit` / `create_fit_card` (`generate.py::generate`): a Gemini call usually takes about 1 s (median 1.1 s), but 12 of 36 calls took more than 5 s and the slowest took 24.0 s. A run makes the two calls one after the other, with no time limit on either, so one slow call stretches the whole run. With only 10 runs per trial, two or three slow calls are enough to push the mean past 15 s, which is what happened in Run 2.
+- Stage `search_listings` via MCP (`mcp_client.call_tool`): every call starts a new `mcp_server.py` Python process over stdio. On Render's shared free-tier CPU that took 3.8–9.7 s every time, where calling the function directly takes about 0.4 ms. So every run, even the fastest, started about 4 s in, which left only about 11 s of the 15 s target for the Gemini calls.
+
+The local 15-calls-per-minute limiter in `generate.py` did fire during the trials themselves: Render's logs show 11 waits of 1–12 s, about 43 s in total across the three trials. That is real but small compared with the extra 20–40 s in the slowest runs, and it did not happen at all in the diagnostic batch. Gemini never sent a 429, since no "service pushed back" lines appear.
+
+**The Improvement**
+
+The change: `agent.py::run_agent` now calls `tools.search_listings` directly instead of through `mcp_client.call_tool("search_listings", ...)`. The function, its arguments and its return value are unchanged; only the way it is called changed. A new setting, `config.USE_MCP_SEARCH`, defaults to off, and `AI201_USE_MCP=1` turns the Unit 4 MCP route back on. Before deploying, I checked locally that both routes return the same results, the same pick and the same early stop for a keyword query, a semantic query and an impossible query.
+
+Why this change: the diagnosis found two causes. Of the two, only the MCP process start is a fixed cost paid on every run, and removing it doesn't change what the agent returns. The Gemini slowdowns depend on the service, so they are the harder problem (see What's Still Broken).
+
+Re-run: all five criteria, three trials each, same script and same requests (`python run_capstone.py --label after --trial N`, results in `results/capstone_after_trial{1,2,3}.{md,json}`):
+
+Before (from Run Log and Verdicts above):
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. semantic_search runs after an empty keyword search | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Semantic pick is in the expected category (or nothing returned) | 3 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Warm mean `duration_ms` of 10 matched runs | ≤ 15.0 s | 8.63 s | 16.98 s | 13.47 s | MISSED |
+| 4. Every request has exactly one complete log record | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Bad input gets a 400 and is logged | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+After:
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. semantic_search runs after an empty keyword search | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Semantic pick is in the expected category (or nothing returned) | 3 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Warm mean `duration_ms` of 10 matched runs | ≤ 15.0 s | 7.83 s | 8.72 s | 12.67 s | MET |
+| 4. Every request has exactly one complete log record | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Bad input gets a 400 and is logged | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+Criterion 3, After Run 3, stage times taken from the log records:
+
+```
+vintage graphic tee under $30  total   8.8s | search_listings 0.4 ms | suggest_outfit   1.5s | create_fit_card   7.3s
+denim jacket under $50         total   9.9s | search_listings 0.4 ms | suggest_outfit   6.0s | create_fit_card   3.9s
+graphic tee                    total   8.0s | search_listings 0.4 ms | suggest_outfit   0.8s | create_fit_card   7.2s
+vintage denim                  total   2.0s | search_listings 0.4 ms | suggest_outfit   1.2s | create_fit_card   0.8s
+leather                        total   3.2s | search_listings 0.4 ms | suggest_outfit   0.7s | create_fit_card   2.5s
+jacket                         total   6.9s | search_listings 0.4 ms | suggest_outfit   4.7s | create_fit_card   2.2s
+streetwear                     total  13.1s | search_listings 0.4 ms | suggest_outfit   4.5s | create_fit_card   8.6s
+retro t-shirt                  total  16.3s | search_listings 0.4 ms | suggest_outfit   1.2s | create_fit_card   7.8s
+oversized hoodie               total  52.9s | search_listings 0.4 ms | suggest_outfit  46.9s | create_fit_card   0.9s
+sweater                        total   5.5s | search_listings 0.4 ms | suggest_outfit   4.7s | create_fit_card   0.6s
+```
+
+Did it help? Yes for criterion 3, and the numbers show it came from the stage I changed, not from chance. Across all 30 criterion 3 runs:
+
+| | Before | After |
+|---|---|---|
+| Mean | 13.03 s | 9.74 s |
+| Fastest run | 4.7 s | 1.4 s |
+| Runs over 15 s | 8 of 30 | 5 of 30 |
+| Search stage | 3.8–9.7 s (MCP) | 0.3–0.5 ms |
+| Slowest run | 46.6 s | 52.9 s |
+
+The mean fell by 3.3 s, close to the ~4 s the MCP start used to cost, and the fastest run dropped from 4.7 s to 1.4 s because that fixed 4 s is gone. The Gemini slowdowns are unchanged: the slowest run actually got slower (52.9 s), and After Run 3 came in at 12.67 s, close to the limit. So the criterion is met with less room to spare than Runs 1 and 2 suggest. The other four criteria were unaffected (MET before and after).
+
+What it cost elsewhere: the deployed agent no longer goes through MCP, which was the Unit 4 feature, although the server and client are still in the repo and one setting turns them back on. It adds no model calls or tokens. One more difference: the "before" trials had 5 matched runs that ended with "The model couldn't be reached" and the "after" trials had none. This change doesn't touch error handling, so I put that down to Gemini having fewer outages during the second run, not to the fix.
