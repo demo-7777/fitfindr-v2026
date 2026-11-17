@@ -44,6 +44,12 @@ _output_tokens = 0
 _client = None
 _budget_warned = False
 
+# UNIT 9 (capstone): where the time goes, in seconds, for the latency breakdown
+_limiter_wait_s = 0.0   # sleeping in _wait_for_slot (our own 15/min pacing)
+_backoff_s = 0.0        # sleeping after the service pushed back (429)
+_api_s = 0.0            # inside generate_content / embed_content calls
+_retries = 0            # pushback retries
+
 
 class QuotaGuard(Exception):
     """Raised when a session blows through its request budget."""
@@ -118,7 +124,10 @@ def _wait_for_slot() -> None:
                 file=sys.stderr,
                 flush=True,
             )
+        global _limiter_wait_s
+        _t = time.perf_counter()
         time.sleep(sleep_for)
+        _limiter_wait_s += time.perf_counter() - _t
         _call_times[:] = [t for t in _call_times if time.monotonic() - t < 60.0]
 
 
@@ -312,7 +321,12 @@ def generate(
                 "config": call_config,
             }
 
-            response = client.models.generate_content(**kwargs)
+            global _api_s
+            _t = time.perf_counter()
+            try:
+                response = client.models.generate_content(**kwargs)
+            finally:
+                _api_s += time.perf_counter() - _t
             _record_tokens(response)
             text = (response.text or "").strip()
 
@@ -338,7 +352,11 @@ def generate(
                 file=sys.stderr,
                 flush=True,
             )
+            global _backoff_s, _retries
+            _retries += 1
+            _t = time.perf_counter()
             time.sleep(backoff)
+            _backoff_s += time.perf_counter() - _t
 
     raise RuntimeError(
         f"Still rate limited after {config.MAX_RETRIES} attempts. Wait a "
@@ -368,6 +386,8 @@ def embed(texts: list[str]) -> list[list[float]]:
     _session_calls += 1
 
     try:
+        global _api_s
+        _t = time.perf_counter()
         response = client.models.embed_content(
             model=config.EMBED_MODEL,
             contents=texts,
@@ -375,5 +395,17 @@ def embed(texts: list[str]) -> list[list[float]]:
         )
     except Exception as exc:  # noqa: BLE001 — surfaced below
         raise ModelUnavailable(_explain(exc)) from exc
+    finally:
+        _api_s += time.perf_counter() - _t
 
     return [list(e.values) for e in response.embeddings]
+
+
+def timing_counters() -> dict:
+    """UNIT 9: cumulative seconds spent waiting vs. calling the service."""
+    return {
+        "limiter_wait_s": _limiter_wait_s,
+        "backoff_s": _backoff_s,
+        "api_s": _api_s,
+        "retries": _retries,
+    }

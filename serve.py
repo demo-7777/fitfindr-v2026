@@ -71,11 +71,13 @@ _log_lock = threading.Lock()
 
 def _usage_snapshot() -> dict:
     tokens = generate.token_counts()
+    timing = generate.timing_counters()
     return {
         "calls": generate.call_count(),
         "cache_hits": generate._cache_hits,
         "prompt": tokens["prompt"],
         "output": tokens["output"],
+        **timing,
     }
 
 
@@ -113,6 +115,13 @@ def _log_record(request_id, started, query, status, session=None,
         "cache_hits": after["cache_hits"] - before["cache_hits"],
         "prompt_tokens": after["prompt"] - before["prompt"],
         "output_tokens": after["output"] - before["output"],
+        # UNIT 9 latency breakdown: per-stage wall clock, and how much of it
+        # was our own limiter sleeping vs. the service answering
+        "stages_ms": (session or {}).get("timings_ms") or {},
+        "limiter_wait_ms": round((after["limiter_wait_s"] - before["limiter_wait_s"]) * 1000, 1),
+        "backoff_ms": round((after["backoff_s"] - before["backoff_s"]) * 1000, 1),
+        "api_ms": round((after["api_s"] - before["api_s"]) * 1000, 1),
+        "retries": after["retries"] - before["retries"],
     }
 
 

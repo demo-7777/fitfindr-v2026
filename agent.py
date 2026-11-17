@@ -16,6 +16,7 @@ Build and test your three tools in `tools.py` first. Then come here.
 import config
 import trace
 import re
+import time
 # from tools import search_listings, suggest_outfit, create_fit_card
 # UNIT 4
 from tools import suggest_outfit, create_fit_card
@@ -53,6 +54,7 @@ def new_session(query: str, wardrobe: dict) -> dict:
         "outfit_suggestion": None,   # what suggest_outfit returned
         "fit_card": None,            # what create_fit_card returned
         "error": None,               # set when the run ended early
+        "timings_ms": {},            # UNIT 9: wall-clock ms per stage, for the latency breakdown
     }
 
 
@@ -115,11 +117,15 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     }
 
     # Search for matching listings
-    session["search_results"] = call_tool("search_listings", {
-        "description": session["parsed"]["description"],
-        "size": session["parsed"]["size"],
-        "max_price": session["parsed"]["max_price"],
-    })
+    _t = time.perf_counter()
+    try:
+        session["search_results"] = call_tool("search_listings", {
+            "description": session["parsed"]["description"],
+            "size": session["parsed"]["size"],
+            "max_price": session["parsed"]["max_price"],
+        })
+    finally:
+        session["timings_ms"]["search_listings_mcp"] = round((time.perf_counter() - _t) * 1000, 1)
     trace.step(
         "search_listings (via MCP)",
         inputs=session["parsed"],
@@ -132,11 +138,15 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     else:
         # UNIT 9: keyword search found nothing — try matching by meaning
         try:
-            session["semantic_results"] = semantic_search(
-                session["parsed"]["description"],
-                session["parsed"]["size"],
-                session["parsed"]["max_price"],
-            )
+            _t = time.perf_counter()
+            try:
+                session["semantic_results"] = semantic_search(
+                    session["parsed"]["description"],
+                    session["parsed"]["size"],
+                    session["parsed"]["max_price"],
+                )
+            finally:
+                session["timings_ms"]["semantic_search"] = round((time.perf_counter() - _t) * 1000, 1)
         except ModelUnavailable:
             # Don't disguise an API failure as "no match" — say what happened
             session["error"] = (
@@ -167,10 +177,14 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     trace.check_iterations(iteration_count)
 
     try:
-        session["outfit_suggestion"] = suggest_outfit(
-            session["selected_item"],
-            session["wardrobe"],
-        )
+        _t = time.perf_counter()
+        try:
+            session["outfit_suggestion"] = suggest_outfit(
+                session["selected_item"],
+                session["wardrobe"],
+            )
+        finally:
+            session["timings_ms"]["suggest_outfit"] = round((time.perf_counter() - _t) * 1000, 1)
         trace.step(
             "suggest_outfit",
             inputs={
@@ -183,10 +197,14 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         iteration_count += 1
         trace.check_iterations(iteration_count)
 
-        session["fit_card"] = create_fit_card(
-            session["outfit_suggestion"],
-            session["selected_item"],
-        )
+        _t = time.perf_counter()
+        try:
+            session["fit_card"] = create_fit_card(
+                session["outfit_suggestion"],
+                session["selected_item"],
+            )
+        finally:
+            session["timings_ms"]["create_fit_card"] = round((time.perf_counter() - _t) * 1000, 1)
         trace.step(
             "create_fit_card",
             inputs={
