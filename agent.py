@@ -23,6 +23,8 @@ from tools import suggest_outfit, create_fit_card
 from mcp_client import call_tool
 # UNIT 9 (capstone): fallback when keyword search returns nothing
 from tools import semantic_search
+# UNIT 9 improvement: call search_listings directly unless config.USE_MCP_SEARCH
+from tools import search_listings
 
 from generate import ModelUnavailable
 
@@ -117,17 +119,28 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     }
 
     # Search for matching listings
+    # UNIT 9 improvement: going through MCP starts a new mcp_server.py process
+    # on every call — measured at 3.8–9.7 s on Render, vs ~0.4 ms direct. Same
+    # function, same arguments, same return value; only the transport changes.
     _t = time.perf_counter()
     try:
-        session["search_results"] = call_tool("search_listings", {
-            "description": session["parsed"]["description"],
-            "size": session["parsed"]["size"],
-            "max_price": session["parsed"]["max_price"],
-        })
+        if config.USE_MCP_SEARCH:
+            session["search_results"] = call_tool("search_listings", {
+                "description": session["parsed"]["description"],
+                "size": session["parsed"]["size"],
+                "max_price": session["parsed"]["max_price"],
+            })
+        else:
+            session["search_results"] = search_listings(
+                session["parsed"]["description"],
+                session["parsed"]["size"],
+                session["parsed"]["max_price"],
+            )
     finally:
-        session["timings_ms"]["search_listings_mcp"] = round((time.perf_counter() - _t) * 1000, 1)
+        stage = "search_listings_mcp" if config.USE_MCP_SEARCH else "search_listings"
+        session["timings_ms"][stage] = round((time.perf_counter() - _t) * 1000, 1)
     trace.step(
-        "search_listings (via MCP)",
+        "search_listings (via MCP)" if config.USE_MCP_SEARCH else "search_listings",
         inputs=session["parsed"],
         returned=session["search_results"],
     )

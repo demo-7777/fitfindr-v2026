@@ -79,6 +79,11 @@ SEMANTIC_THRESHOLD = 0.60
 # How many semantic matches to return (best first). The agent uses the first.
 SEMANTIC_RESULT_LIMIT = 3
 
+# UNIT 9 improvement: route keyword search through MCP (unit 4) or call it
+# directly. MCP spawns a server process per call, ~4 s on Render's free tier.
+# Set AI201_USE_MCP=1 to restore the unit 4 behaviour.
+USE_MCP_SEARCH = os.getenv("AI201_USE_MCP", "0") == "1"
+
 
 # ─── Model ───────────────────────────────────────────────────────────────────
 
