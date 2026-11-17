@@ -1,0 +1,1257 @@
+{
+  "label": "after",
+  "trial": 2,
+  "url": "https://fitfindr-v2026.onrender.com",
+  "started": "2026-11-17T20:38:56+00:00",
+  "finished": "2026-11-17T20:41:56+00:00",
+  "scores": {
+    "c1": {
+      "passed": 5,
+      "of": 5,
+      "met": true,
+      "per_request": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "c2": {
+      "passed": 5,
+      "of": 5,
+      "met": true,
+      "detail": [
+        {
+          "query": "retro t-shirt",
+          "expected": "tops",
+          "selected_id": "lst_006",
+          "selected_title": "Graphic Tee — 2003 Tour Bootleg Style",
+          "category": "tops",
+          "similarity": 0.6175,
+          "pass": true
+        },
+        {
+          "query": "slacks",
+          "expected": "bottoms",
+          "selected_id": null,
+          "selected_title": null,
+          "category": null,
+          "similarity": null,
+          "pass": true
+        },
+        {
+          "query": "rain coat",
+          "expected": "outerwear",
+          "selected_id": null,
+          "selected_title": null,
+          "category": null,
+          "similarity": null,
+          "pass": true
+        },
+        {
+          "query": "trainers",
+          "expected": "shoes",
+          "selected_id": null,
+          "selected_title": null,
+          "category": null,
+          "similarity": null,
+          "pass": true
+        },
+        {
+          "query": "handbag",
+          "expected": "accessories",
+          "selected_id": null,
+          "selected_title": null,
+          "category": null,
+          "similarity": null,
+          "pass": true
+        }
+      ]
+    },
+    "c3": {
+      "warm": true,
+      "health_seconds": 0.088,
+      "matched_runs": 10,
+      "excluded": [],
+      "mean_s": 8.72,
+      "max_s": 22.93,
+      "met": true
+    },
+    "c4": {
+      "passed": 5,
+      "of": 5,
+      "met": true,
+      "per_request": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "c5": {
+      "passed": 5,
+      "of": 5,
+      "met": true,
+      "per_request": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "results": {
+    "c1": [
+      {
+        "sent": {
+          "query": "black boots"
+        },
+        "http_status": 200,
+        "client_seconds": 9.3,
+        "request_id": "27ecb92d",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 174.8,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 8734.0,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 8551.4,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "black boots",
+          "request_id": "27ecb92d",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.4,
+            "semantic_search": 8733.3
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:05.207+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "oversized hoodie"
+        },
+        "http_status": 200,
+        "client_seconds": 7.01,
+        "request_id": "eae018bb",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 1813.9,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 6391.6,
+          "error": null,
+          "fit_card_chars": 313,
+          "keyword_results": 0,
+          "limiter_wait_ms": 4568.9,
+          "model_calls": 3,
+          "output_tokens": 203,
+          "prompt_tokens": 649,
+          "query": "oversized hoodie",
+          "request_id": "eae018bb",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_027",
+          "selected_price": 21.0,
+          "selected_title": "Oversized College Crewneck — Faded Red",
+          "semantic_results": 3,
+          "similarity": 0.6546,
+          "stages_ms": {
+            "create_fit_card": 1337.1,
+            "search_listings": 0.5,
+            "semantic_search": 155.9,
+            "suggest_outfit": 4897.6
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:11.693+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "sweater"
+        },
+        "http_status": 200,
+        "client_seconds": 7.23,
+        "request_id": "dd5eef2e",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 1782.6,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 6555.6,
+          "error": null,
+          "fit_card_chars": 268,
+          "keyword_results": 0,
+          "limiter_wait_ms": 4764.6,
+          "model_calls": 3,
+          "output_tokens": 189,
+          "prompt_tokens": 648,
+          "query": "sweater",
+          "request_id": "dd5eef2e",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_008",
+          "selected_price": 35.0,
+          "selected_title": "Knit Cardigan — Chunky Brown",
+          "semantic_results": 1,
+          "similarity": 0.6083,
+          "stages_ms": {
+            "create_fit_card": 1549.4,
+            "search_listings": 0.4,
+            "semantic_search": 158.8,
+            "suggest_outfit": 4846.5
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:18.361+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "summer dress"
+        },
+        "http_status": 200,
+        "client_seconds": 3.98,
+        "request_id": "eb7485e3",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 146.5,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 3656.4,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 3500.9,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "summer dress",
+          "request_id": "eb7485e3",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.3,
+            "semantic_search": 3655.7
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:22.102+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "laptop charger"
+        },
+        "http_status": 200,
+        "client_seconds": 1.76,
+        "request_id": "8f58bf94",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 147.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 1552.4,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 1396.1,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "laptop charger",
+          "request_id": "8f58bf94",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.4,
+            "semantic_search": 1551.7
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:23.726+00:00"
+        }
+      }
+    ],
+    "c2": [
+      {
+        "sent": {
+          "query": "retro t-shirt"
+        },
+        "http_status": 200,
+        "client_seconds": 3.67,
+        "request_id": "1b5bc65c",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 1642.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 3315.6,
+          "error": null,
+          "fit_card_chars": 290,
+          "keyword_results": 0,
+          "limiter_wait_ms": 1658.3,
+          "model_calls": 3,
+          "output_tokens": 220,
+          "prompt_tokens": 676,
+          "query": "retro t-shirt",
+          "request_id": "1b5bc65c",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_006",
+          "selected_price": 24.0,
+          "selected_title": "Graphic Tee — 2003 Tour Bootleg Style",
+          "semantic_results": 2,
+          "similarity": 0.6175,
+          "stages_ms": {
+            "create_fit_card": 633.0,
+            "search_listings": 0.4,
+            "semantic_search": 1063.4,
+            "suggest_outfit": 1618.2
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:27.113+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "slacks"
+        },
+        "http_status": 200,
+        "client_seconds": 0.76,
+        "request_id": "e79094b4",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 152.7,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 630.8,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 470.2,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "slacks",
+          "request_id": "e79094b4",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.4,
+            "semantic_search": 630.1
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:27.821+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "rain coat"
+        },
+        "http_status": 200,
+        "client_seconds": 1.49,
+        "request_id": "fb037a58",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 139.4,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 1304.4,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 1153.7,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "rain coat",
+          "request_id": "fb037a58",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.4,
+            "semantic_search": 1303.6
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:29.198+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "trainers"
+        },
+        "http_status": 200,
+        "client_seconds": 26.69,
+        "request_id": "4f3b6c09",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 176.5,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 26362.1,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 26176.8,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "trainers",
+          "request_id": "4f3b6c09",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.4,
+            "semantic_search": 26361.3
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:39:55.664+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "handbag"
+        },
+        "http_status": 200,
+        "client_seconds": 9.08,
+        "request_id": "b7c6824f",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 188.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 9595.4,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 9399.0,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "handbag",
+          "request_id": "b7c6824f",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.3,
+            "semantic_search": 9594.7
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:05.320+00:00"
+        }
+      }
+    ],
+    "c3_health": {
+      "http_status": 200,
+      "seconds": 0.088
+    },
+    "c3": [
+      {
+        "sent": {
+          "query": "vintage graphic tee under $30"
+        },
+        "http_status": 200,
+        "client_seconds": 5.91,
+        "request_id": "7fc08122",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 2492.9,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 5775.6,
+          "error": null,
+          "fit_card_chars": 264,
+          "keyword_results": 6,
+          "limiter_wait_ms": 3281.5,
+          "model_calls": 2,
+          "output_tokens": 203,
+          "prompt_tokens": 657,
+          "query": "vintage graphic tee under $30",
+          "request_id": "7fc08122",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_002",
+          "selected_price": 18.0,
+          "selected_title": "Y2K Baby Tee — Butterfly Print",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 4951.8,
+            "search_listings": 0.4,
+            "suggest_outfit": 822.9
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:11.315+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "denim jacket under $50"
+        },
+        "http_status": 200,
+        "client_seconds": 2.05,
+        "request_id": "55e49208",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 1934.6,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 1935.7,
+          "error": null,
+          "fit_card_chars": 349,
+          "keyword_results": 1,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 2,
+          "output_tokens": 211,
+          "prompt_tokens": 650,
+          "query": "denim jacket under $50",
+          "request_id": "55e49208",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_007",
+          "selected_price": 42.0,
+          "selected_title": "Denim Jacket — Light Wash, Cropped",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 692.2,
+            "search_listings": 0.4,
+            "suggest_outfit": 1242.6
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:13.373+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "graphic tee"
+        },
+        "http_status": 200,
+        "client_seconds": 5.19,
+        "request_id": "d41a3b27",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 2301.7,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 5110.5,
+          "error": null,
+          "fit_card_chars": 319,
+          "keyword_results": 4,
+          "limiter_wait_ms": 2807.6,
+          "model_calls": 2,
+          "output_tokens": 212,
+          "prompt_tokens": 653,
+          "query": "graphic tee",
+          "request_id": "d41a3b27",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_002",
+          "selected_price": 18.0,
+          "selected_title": "Y2K Baby Tee — Butterfly Print",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 1074.7,
+            "search_listings": 0.4,
+            "suggest_outfit": 4034.9
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:18.560+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "vintage denim"
+        },
+        "http_status": 200,
+        "client_seconds": 6.19,
+        "request_id": "1dfffac3",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 1890.9,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 6048.8,
+          "error": null,
+          "fit_card_chars": 286,
+          "keyword_results": 5,
+          "limiter_wait_ms": 4156.8,
+          "model_calls": 2,
+          "output_tokens": 185,
+          "prompt_tokens": 639,
+          "query": "vintage denim",
+          "request_id": "1dfffac3",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_001",
+          "selected_price": 38.0,
+          "selected_title": "Vintage Levi's 501 Jeans — Medium Wash",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 1907.2,
+            "search_listings": 0.4,
+            "suggest_outfit": 4140.7
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:24.763+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "leather"
+        },
+        "http_status": 200,
+        "client_seconds": 8.16,
+        "request_id": "50ef68c4",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 8069.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 8070.0,
+          "error": null,
+          "fit_card_chars": 233,
+          "keyword_results": 4,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 2,
+          "output_tokens": 174,
+          "prompt_tokens": 632,
+          "query": "leather",
+          "request_id": "50ef68c4",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_009",
+          "selected_price": 55.0,
+          "selected_title": "Platform Mary Janes — Black Patent",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 794.4,
+            "search_listings": 0.4,
+            "suggest_outfit": 7274.9
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:32.919+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "jacket"
+        },
+        "http_status": 200,
+        "client_seconds": 4.27,
+        "request_id": "a9ecb7d2",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 4122.2,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 4123.2,
+          "error": null,
+          "fit_card_chars": 290,
+          "keyword_results": 4,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 2,
+          "output_tokens": 203,
+          "prompt_tokens": 662,
+          "query": "jacket",
+          "request_id": "a9ecb7d2",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_004",
+          "selected_price": 45.0,
+          "selected_title": "90s Track Jacket — Navy/White Stripe",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 862.3,
+            "search_listings": 0.4,
+            "suggest_outfit": 3260.0
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:40:37.176+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "streetwear"
+        },
+        "http_status": 200,
+        "client_seconds": 23.91,
+        "request_id": "fd98e940",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 10031.7,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 22932.1,
+          "error": null,
+          "fit_card_chars": 308,
+          "keyword_results": 10,
+          "limiter_wait_ms": 12899.4,
+          "model_calls": 2,
+          "output_tokens": 193,
+          "prompt_tokens": 640,
+          "query": "streetwear",
+          "request_id": "fd98e940",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_001",
+          "selected_price": 38.0,
+          "selected_title": "Vintage Levi's 501 Jeans — Medium Wash",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 17533.2,
+            "search_listings": 0.4,
+            "suggest_outfit": 5398.1
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:00.217+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "retro t-shirt"
+        },
+        "http_status": 200,
+        "client_seconds": 20.69,
+        "request_id": "9c89945a",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 13847.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 18985.5,
+          "error": null,
+          "fit_card_chars": 248,
+          "keyword_results": 0,
+          "limiter_wait_ms": 5129.9,
+          "model_calls": 3,
+          "output_tokens": 201,
+          "prompt_tokens": 662,
+          "query": "retro t-shirt",
+          "request_id": "9c89945a",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_006",
+          "selected_price": 24.0,
+          "selected_title": "Graphic Tee — 2003 Tour Bootleg Style",
+          "semantic_results": 2,
+          "similarity": 0.6175,
+          "stages_ms": {
+            "create_fit_card": 5748.9,
+            "search_listings": 0.4,
+            "semantic_search": 5063.6,
+            "suggest_outfit": 8171.9
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:19.321+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "oversized hoodie"
+        },
+        "http_status": 200,
+        "client_seconds": 12.25,
+        "request_id": "3705a119",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 12197.7,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 12206.8,
+          "error": null,
+          "fit_card_chars": 299,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 3,
+          "output_tokens": 186,
+          "prompt_tokens": 639,
+          "query": "oversized hoodie",
+          "request_id": "3705a119",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_027",
+          "selected_price": 21.0,
+          "selected_title": "Oversized College Crewneck — Faded Red",
+          "semantic_results": 3,
+          "similarity": 0.6546,
+          "stages_ms": {
+            "create_fit_card": 10739.4,
+            "search_listings": 0.4,
+            "semantic_search": 174.4,
+            "suggest_outfit": 1292.1
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:31.707+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "sweater"
+        },
+        "http_status": 200,
+        "client_seconds": 2.08,
+        "request_id": "b267f714",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 1973.3,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 1982.1,
+          "error": null,
+          "fit_card_chars": 239,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 3,
+          "output_tokens": 190,
+          "prompt_tokens": 652,
+          "query": "sweater",
+          "request_id": "b267f714",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_008",
+          "selected_price": 35.0,
+          "selected_title": "Knit Cardigan — Chunky Brown",
+          "semantic_results": 1,
+          "similarity": 0.6083,
+          "stages_ms": {
+            "create_fit_card": 843.3,
+            "search_listings": 0.4,
+            "semantic_search": 162.2,
+            "suggest_outfit": 975.8
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:33.803+00:00"
+        }
+      }
+    ],
+    "c4": [
+      {
+        "sent": {
+          "query": "vintage graphic tee under $30"
+        },
+        "http_status": 200,
+        "client_seconds": 4.22,
+        "request_id": "a8225950",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 4049.4,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 4051.3,
+          "error": null,
+          "fit_card_chars": 278,
+          "keyword_results": 6,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 2,
+          "output_tokens": 208,
+          "prompt_tokens": 658,
+          "query": "vintage graphic tee under $30",
+          "request_id": "a8225950",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "keyword",
+          "selected_id": "lst_002",
+          "selected_price": 18.0,
+          "selected_title": "Y2K Baby Tee — Butterfly Print",
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "create_fit_card": 768.5,
+            "search_listings": 0.3,
+            "suggest_outfit": 3281.2
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:38.007+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "retro t-shirt"
+        },
+        "http_status": 200,
+        "client_seconds": 3.67,
+        "request_id": "b310dbbb",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 3568.1,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 3576.3,
+          "error": null,
+          "fit_card_chars": 297,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 3,
+          "output_tokens": 200,
+          "prompt_tokens": 656,
+          "query": "retro t-shirt",
+          "request_id": "b310dbbb",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": "semantic",
+          "selected_id": "lst_006",
+          "selected_price": 24.0,
+          "selected_title": "Graphic Tee — 2003 Tour Bootleg Style",
+          "semantic_results": 2,
+          "similarity": 0.6175,
+          "stages_ms": {
+            "create_fit_card": 911.5,
+            "search_listings": 0.3,
+            "semantic_search": 158.3,
+            "suggest_outfit": 2505.7
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:41.693+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": "laptop charger"
+        },
+        "http_status": 200,
+        "client_seconds": 14.16,
+        "request_id": "fd1258ef",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 166.3,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 14079.0,
+          "error": "No matching listings were found. Try changing the description, size, or increasing the maximum price.",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 13902.9,
+          "model_calls": 1,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "laptop charger",
+          "request_id": "fd1258ef",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {
+            "search_listings": 0.3,
+            "semantic_search": 14078.3
+          },
+          "status": 200,
+          "ts": "2026-11-17T20:41:55.855+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": ""
+        },
+        "http_status": 400,
+        "client_seconds": 0.24,
+        "request_id": "29a62095",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "",
+          "request_id": "29a62095",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.079+00:00"
+        }
+      },
+      {
+        "sent": "this is not json",
+        "http_status": 400,
+        "client_seconds": 0.1,
+        "request_id": "130ef2e6",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": null,
+          "request_id": "130ef2e6",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.187+00:00"
+        }
+      }
+    ],
+    "c5": [
+      {
+        "sent": {
+          "query": ""
+        },
+        "http_status": 400,
+        "client_seconds": 0.09,
+        "request_id": "8d2af4c7",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "",
+          "request_id": "8d2af4c7",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.278+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": ""
+        },
+        "http_status": 400,
+        "client_seconds": 0.07,
+        "request_id": "30cfeb15",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": "",
+          "request_id": "30cfeb15",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.340+00:00"
+        }
+      },
+      {
+        "sent": "this is not json",
+        "http_status": 400,
+        "client_seconds": 0.06,
+        "request_id": "edd94169",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": null,
+          "request_id": "edd94169",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.415+00:00"
+        }
+      },
+      {
+        "sent": "{broken json",
+        "http_status": 400,
+        "client_seconds": 0.09,
+        "request_id": "56fe53d3",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": null,
+          "request_id": "56fe53d3",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.493+00:00"
+        }
+      },
+      {
+        "sent": {
+          "query": 123
+        },
+        "http_status": 400,
+        "client_seconds": 0.06,
+        "request_id": "285c994c",
+        "log_matches": 1,
+        "log": {
+          "api_ms": 0.0,
+          "backoff_ms": 0.0,
+          "cache_hits": 0,
+          "duration_ms": 0.1,
+          "error": "Send JSON with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}",
+          "fit_card_chars": 0,
+          "keyword_results": 0,
+          "limiter_wait_ms": 0.0,
+          "model_calls": 0,
+          "output_tokens": 0,
+          "prompt_tokens": 0,
+          "query": 123,
+          "request_id": "285c994c",
+          "retries": 0,
+          "route": "/ask",
+          "search_method": null,
+          "selected_id": null,
+          "selected_price": null,
+          "selected_title": null,
+          "semantic_results": 0,
+          "similarity": null,
+          "stages_ms": {},
+          "status": 400,
+          "ts": "2026-11-17T20:41:56.568+00:00"
+        }
+      }
+    ]
+  }
+}
