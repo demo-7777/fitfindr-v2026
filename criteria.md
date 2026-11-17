@@ -1,5 +1,10 @@
 # Acceptance criteria — FitFindr
 
+> **Unit 9 (capstone):** the five capstone criteria are in the
+> [Capstone criteria (Unit 9)](#capstone-criteria-unit-9) section at the end of
+> this file. The criteria directly below are from units 3–4 and are left
+> unchanged.
+
 Five criteria that say what "working" means for this agent, written in unit 3
 **before** any results existed.
 
@@ -138,3 +143,55 @@ Given a query with a maximum price, the agent never selects a listing whose pric
      A number you missed stays where it is, gets diagnosed, and gets a fix
      attempted. That's where the points are.
      ───────────────────────────────────────────────────────────────────────── -->
+
+
+---
+
+## Capstone criteria (Unit 9)
+
+Five criteria for the capstone extension (the `semantic_search` fallback, the Render deployment, and the structured log), written before any capstone test results existed. All runs go to the deployed service at https://fitfindr-v2026.onrender.com; each criterion is run in three separate trials.
+
+### 1. Given a search query in which search_listings returns empty, semantic_search is then called next, 5 out of 5 times.
+
+Queries (each confirmed to return 0 results from search_listings): "black boots", "oversized hoodie", "sweater", "summer dress", "laptop charger". Each is sent once per trial to POST /ask on the deployed service.
+
+**How a pass is observed:** the query's /logs record shows `keyword_results: 0` and `model_calls` of at least 1. With no price or size in the query, the only way a model call can happen after an empty keyword search is semantic_search embedding the query; if semantic_search were skipped, the run would stop with `model_calls: 0`.
+
+**Why this target:** Because semantic_search is supposed to be the fallback method if search_listings returns nothing. Therefore any other time semantic_search is called would be broken behavior. It is 5 of 5 because the branch in `agent.py` is a plain `if` on an empty list, with no model involved in the decision, so there is no legitimate reason for it to be skipped even once.
+
+---
+
+### 2. Given 5 queries, each with a unique expected category, that all make search_listings return empty, a query passes only if semantic_search returns empty or a listing with the correct category. Target: at least 3 of the 5 queries pass in each trial.
+
+Queries and expected category (each confirmed to return 0 results from search_listings; expected categories written before any semantic_search run):
+- "retro t-shirt" → tops
+- "slacks" → bottoms
+- "rain coat" → outerwear
+- "trainers" → shoes
+- "handbag" → accessories
+
+**How a pass is observed:** the /logs record's `selected_id` is looked up in `data/listings.json` and its `category` compared to the expected one; `search_method: null` (nothing returned) also passes.
+
+**Why this target:** the semantic test may return a listing that matches based on a different field of the listing rather than the category (tops, bottoms, etc).
+
+---
+
+### 3. In 10 observed warm runs in which the service returns a match, the service should have a mean completion time no more than 15.0s. A run is "warm" if the service has been built and is currently deployed, and /health returns in under 1s first.
+
+The 10 queries, sent once each per trial to POST /ask on the deployed service: "vintage graphic tee under $30", "denim jacket under $50", "graphic tee", "vintage denim", "leather", "jacket", "streetwear", "retro t-shirt", "oversized hoodie", "sweater". Completion time is the `duration_ms` field of each run's /logs record. A run that does not return a match (`search_method: null`) is left out of the mean and reported.
+
+**Why this target:** The service needs to complete fast enough such that users should not expect the system is slow or hanging. The service should be considered broken if it makes users wait too long over many requests. For FitFindr specifically: the cost measurement already put matching runs at 10–24 s, and one run before the timeout fix took 30.8 s and was killed by gunicorn's 30 s worker timeout. A mean of 15.0 s keeps typical runs at about half that 30 s line, where the service had already failed once, instead of drifting toward it.
+
+---
+
+### 4. Every request sent shows up in /logs with all its fields filled, 5 out of 5 tries. "Filled" means every field is present and request_id is not null.
+
+The 5 requests per trial: one keyword match ("vintage graphic tee under $30"), one semantic match ("retro t-shirt"), one with no match ("laptop charger"), one empty query (`{"query": ""}`), and one non-JSON body. Each response's `request_id` (returned on 200, 400 and 500 responses) must match exactly one /logs record carrying all 19 fields.
+
+**Why this target:** It was previously observed that a request with a timeout could go missing from the log. This criteria is to ensure that all requests are saved. Specifically, the 30.8 s "denim jacket under $50" request on 2026-11-17 returned a 500 and left no record, because the worker was killed before `_write_log()` ran. A record that is missing can't be diagnosed later, so anything below 5 of 5 means the log can't be trusted as the run record.
+
+---
+
+### 5. Bad inputs should get a 400, not a 500, and be logged 5 out of 5 times. The set of bad inputs is 2 empty queries, 2 non-JSON bodies, and 1 non-string query. A pass is HTTP 400 and a log entry with status 400.
+
+**Why this target:** a 500 would cost at least another request to be sent for a correct answer.
