@@ -187,7 +187,7 @@ def ask():
         message = ("Send JSON with a 'query' field, e.g. "
                    '{"query": "vintage graphic tee under $30"}')
         _write_log(_log_record(request_id, started, raw_query, 400, error=message))
-        return jsonify({"error": message}), 400
+        return jsonify({"error": message, "request_id": request_id}), 400
 
     wardrobe = payload.get("wardrobe")
     if not isinstance(wardrobe, dict):
